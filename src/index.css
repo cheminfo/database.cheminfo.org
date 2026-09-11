@@ -1,0 +1,1137 @@
+/* The neutrals, the geometry, the type, the bar and the footer of the family. */
+@import 'react-cheminfo/styles/chrome.css';
+
+/*
+  The two colours this site owns are not written here: `SiteTheme` puts them on
+  the page from the ecosystem record, so the mark, the wordmark, the current
+  page and the tile every sibling site shows are one declaration.
+*/
+:root {
+  color-scheme: light;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+  background: var(--surface-sunken);
+  color: var(--text);
+}
+
+#root {
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+}
+
+/* The page owns the screen it opens on, so the family links below it are always
+   reached by scrolling rather than sitting in the middle of a short page. */
+.app-shell {
+  width: 100%;
+  max-width: var(--page-max);
+  min-height: calc(100dvh - var(--header-height));
+  padding: 16px 1.25rem 24px;
+  margin: 0 auto;
+}
+
+/* Framed in another site: the frame is the margin, and it is usually narrow. */
+.app-shell--embedded {
+  max-width: none;
+  min-height: 0;
+  padding: 8px;
+}
+
+.page__title {
+  margin: 0 0 4px;
+  font-size: 1.375rem;
+  font-weight: 700;
+}
+
+.page__lead {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.app-footer__inner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.app-footer-note {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+}
+
+.app-footer-note a {
+  color: var(--accent);
+}
+
+/*
+  BlueprintJS's own focus selectors out-specify a plain universal rule, so a
+  control still shows a blue ring on click without the `!important`.
+  FocusStyleManager restores the ring for keyboard users.
+*/
+*:focus,
+*:focus-visible {
+  outline: none !important;
+}
+
+/* ---------------------------------------------------------------- playground
+
+   Two editors over one dataset. On a wide screen they sit side by side, so the
+   same question in two languages is read in one glance; below 60rem they stack,
+   because a query is unreadable in half of a phone.
+*/
+
+.playground {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.playground__panes {
+  display: grid;
+  align-items: start;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 60rem) {
+  .playground__panes {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.playground__pane {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  padding: 0.875rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  gap: 0.75rem;
+}
+
+.playground__loading p {
+  margin: 0 0 0.5rem;
+}
+
+.query-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.query-editor__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.query-editor__title {
+  margin: 0;
+  color: var(--text);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.query-editor__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.query-editor__input,
+.query-editor__input.bp6-input {
+  min-height: 11rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  resize: vertical;
+  tab-size: 2;
+  white-space: pre;
+}
+
+/* ------------------------------------------------------------------- results */
+
+.result {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.result__summary {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+}
+
+.result__scroll {
+  overflow-x: auto;
+  max-height: 26rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow-y: auto;
+}
+
+.result__scroll table {
+  width: 100%;
+}
+
+.result__scroll th {
+  position: sticky;
+  z-index: 1;
+  top: 0;
+  background: var(--surface);
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.result__scroll td {
+  max-width: 28rem;
+  font-size: 0.8125rem;
+  vertical-align: top;
+}
+
+.cell--number {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  text-align: right;
+}
+
+.cell__null {
+  color: var(--text-faint);
+  font-style: italic;
+}
+
+.result__error,
+.result__empty {
+  font-size: 0.875rem;
+}
+
+.json-doc {
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  margin: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.json-doc--folded {
+  padding: 0;
+}
+
+.json-doc--folded > summary {
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.8125rem;
+}
+
+.json-doc--folded > pre {
+  padding: 0 0.75rem 0.6rem;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ---------------------------------------------------------------- table list */
+
+.table-list {
+  padding: 0.875rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.table-list__title {
+  margin: 0 0 0.5rem;
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.table-list__items {
+  display: grid;
+  padding: 0;
+  margin: 0;
+  gap: 0.5rem 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+  list-style: none;
+}
+
+.table-list__item {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem;
+}
+
+.table-list__name.bp6-button {
+  padding: 0 0.2rem;
+  color: var(--accent);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.table-list__count {
+  font-variant-numeric: tabular-nums;
+}
+
+.table-list__columns {
+  width: 100%;
+  margin: 0;
+  color: var(--text-faint);
+  font-size: 0.6875rem;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+/* A form control does not inherit the page font; the family stack is the point. */
+input,
+textarea,
+select,
+button {
+  font-family: inherit;
+}
+
+/* ------------------------------------------------------------------- schema */
+
+.schema {
+  display: flex;
+  max-width: 62rem;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.schema__intro {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.schema__story {
+  max-width: 54rem;
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.schema__group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.schema__group-title {
+  padding-bottom: 0.3rem;
+  border-bottom: 2px solid var(--accent);
+  margin: 0.5rem 0 0;
+  font-size: 1.0625rem;
+}
+
+.schema__group-blurb {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.schema__table {
+  padding: 0.875rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  scroll-margin-top: calc(var(--header-height) + 1rem);
+}
+
+.schema__table-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.schema__table-name {
+  margin: 0;
+  color: var(--accent);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.schema__table-blurb {
+  margin: 0.25rem 0 0.6rem;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.schema__columns {
+  overflow-x: auto;
+}
+
+.schema__columns table {
+  width: 100%;
+  font-size: 0.8125rem;
+}
+
+.schema__column-name {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.schema__column-type {
+  color: var(--text-faint);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  white-space: nowrap;
+}
+
+/* A dot rather than a word, so the column of names stays scannable. */
+.schema__required::after {
+  color: var(--brand-alt);
+  content: ' •';
+}
+
+/* The diagram is generated from the same records the cards below are, so a
+   table added to `schema.ts` appears in both. */
+.schema__diagram {
+  overflow-x: auto;
+  padding: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin: 0;
+  background: var(--surface);
+}
+
+.schema__diagram svg {
+  display: block;
+  width: 100%;
+  min-width: 50rem;
+  height: auto;
+}
+
+.schema__diagram figcaption {
+  max-width: 46rem;
+  padding: 0.5rem 0.25rem 0.125rem;
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+}
+
+.schema__node rect {
+  fill: var(--surface);
+  stroke: var(--border-strong);
+  stroke-width: 1;
+}
+
+.schema__node--view rect {
+  stroke-dasharray: 5 4;
+}
+
+.schema__node:hover rect {
+  fill: color-mix(in oklab, var(--accent) 10%, white);
+  stroke: var(--accent);
+}
+
+.schema__node-name {
+  fill: var(--accent);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+.schema__node-rows {
+  fill: var(--text-faint);
+  font-size: 11px;
+}
+
+.schema__edge {
+  fill: none;
+  stroke: var(--border-strong);
+  stroke-width: 1.4;
+}
+
+.schema__edge--reads {
+  stroke-dasharray: 5 4;
+}
+
+.schema__arrow-head {
+  fill: var(--border-strong);
+}
+
+.schema__reference {
+  color: var(--accent);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+/* ----------------------------------------------------------------- tutorial */
+
+.tutorial,
+.exercises,
+.cheatsheet {
+  display: flex;
+  max-width: 66rem;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.tutorial__strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 0.6rem 0.875rem;
+  border-radius: var(--radius);
+  gap: 0.5rem 1rem;
+}
+
+/* The three groups are the pedagogic order, so they carry the status hues
+   rather than the brand: green is where everyone starts. */
+.tutorial__strip--beginner {
+  background: color-mix(in oklab, var(--success) 10%, white);
+}
+
+.tutorial__strip--intermediate {
+  background: color-mix(in oklab, var(--warning) 12%, white);
+}
+
+.tutorial__strip--advanced {
+  background: color-mix(in oklab, var(--danger) 9%, white);
+}
+
+.tutorial__strip-head {
+  min-width: 15rem;
+  flex: 1 1 15rem;
+}
+
+.tutorial__strip-title {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.tutorial__strip-blurb {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+}
+
+.tutorial__numbers {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 0;
+  margin: 0;
+  gap: 0.3rem;
+  list-style: none;
+}
+
+.tutorial__number.bp6-button {
+  min-width: 2.1rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.tutorial__step {
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--surface);
+  gap: 0.75rem;
+}
+
+.tutorial__step--beginner {
+  border-left-color: var(--success);
+}
+.tutorial__step--intermediate {
+  border-left-color: var(--warning);
+}
+.tutorial__step--advanced {
+  border-left-color: var(--danger);
+}
+
+.tutorial__step-title {
+  margin: 0;
+  font-size: 1.125rem;
+}
+
+.tutorial__step-description {
+  max-width: 52rem;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.tutorial__queries {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 56rem) {
+  .tutorial__queries {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.tutorial__query h3,
+.exercise__solution h3 {
+  margin: 0 0 0.3rem;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.tutorial__query pre,
+.exercise__solution pre,
+.cheatsheet__example {
+  overflow-x: auto;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin: 0;
+  background: var(--surface-sunken);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.tutorial__pager {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* ------------------------------------------------------------------ glossary */
+
+.glossary-term {
+  border-bottom: 1px dashed var(--accent);
+  color: var(--accent);
+  cursor: help;
+  font-weight: 600;
+}
+
+.glossary-card {
+  max-width: 26rem;
+  padding: 0.25rem;
+}
+
+.glossary-card__title {
+  margin: 0 0 0.25rem;
+  font-weight: 700;
+}
+
+.glossary-card__summary {
+  margin: 0 0 0.4rem;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.glossary-card__examples {
+  padding-left: 1rem;
+  margin: 0;
+  font-size: 0.75rem;
+}
+
+.glossary-card__examples li {
+  margin-bottom: 0.3rem;
+}
+
+.glossary-card__note {
+  display: block;
+  font-style: italic;
+  opacity: 0.85;
+}
+
+/* ---------------------------------------------------------------- exercises */
+
+.exercises__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.exercises__body {
+  display: grid;
+  align-items: start;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 62rem) {
+  .exercises__body {
+    grid-template-columns: 20rem 1fr;
+  }
+}
+
+.exercises__list {
+  display: flex;
+  max-height: 40rem;
+  flex-direction: column;
+  padding: 0;
+  margin: 0;
+  gap: 0.2rem;
+  list-style: none;
+  overflow-y: auto;
+}
+
+.exercises__entry .exercises__entry-title {
+  overflow: hidden;
+  flex: 1;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.exercise {
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  gap: 0.75rem;
+}
+
+.exercise__title {
+  margin: 0;
+  font-size: 1.125rem;
+}
+
+.exercise__description {
+  max-width: 50rem;
+  margin: 0.25rem 0 0;
+  line-height: 1.6;
+}
+
+.exercise__editor,
+.exercise__editor.bp6-input {
+  min-height: 8rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.8125rem;
+  resize: vertical;
+  white-space: pre;
+}
+
+.exercise__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.exercise__cases {
+  padding: 0;
+  margin: 0;
+  font-size: 0.8125rem;
+  list-style: none;
+}
+
+.exercise__cases li {
+  display: flex;
+  align-items: baseline;
+  padding: 0.2rem 0;
+  gap: 0.5rem;
+}
+
+.exercise__cases .is-pass .exercise__case-mark {
+  color: var(--success);
+}
+.exercise__cases .is-fail .exercise__case-mark {
+  color: var(--danger);
+}
+
+.exercise__case-mark {
+  width: 1rem;
+  font-weight: 700;
+}
+
+.exercise__case-reason {
+  color: var(--text-muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.75rem;
+}
+
+/* --------------------------------------------------------------- cheatsheet */
+
+.cheatsheet__section-title {
+  padding-bottom: 0.3rem;
+  border-bottom: 2px solid var(--accent);
+  margin: 0.75rem 0 0.2rem;
+  font-size: 1.0625rem;
+}
+
+.cheatsheet__section-blurb {
+  margin: 0 0 0.4rem;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.cheatsheet__table {
+  width: 100%;
+  font-size: 0.8125rem;
+  table-layout: fixed;
+}
+
+.cheatsheet__table th:first-child,
+.cheatsheet__concept {
+  width: 22%;
+}
+
+.cheatsheet__concept {
+  font-weight: 600;
+}
+
+.cheatsheet__note {
+  display: block;
+  margin-top: 0.2rem;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+
+.cheatsheet__code {
+  display: block;
+  overflow-wrap: break-word;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.75rem;
+}
+
+.cheatsheet__example {
+  margin-top: 0.3rem;
+}
+
+.cheatsheet__absent {
+  color: var(--text-faint);
+  font-style: italic;
+}
+
+@media print {
+  .cheatsheet__section {
+    break-inside: avoid;
+  }
+
+  .cheatsheet__example {
+    display: none;
+  }
+}
+
+/* -------------------------------------------------------------------- browse
+
+   The list holds the screen's height and scrolls on its own, so moving through
+   541 compounds with the arrow keys never moves the page under the reader.
+*/
+
+.browse {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.browse__body {
+  display: grid;
+  align-items: start;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 62rem) {
+  .browse__body {
+    grid-template-columns: 22rem 1fr;
+  }
+}
+
+.browse__list {
+  display: flex;
+  flex-direction: column;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  gap: 0.4rem;
+}
+
+.browse__count {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.browse__scroll {
+  display: flex;
+  max-height: 34rem;
+  flex-direction: column;
+  gap: 0.1rem;
+  overflow-y: auto;
+}
+
+.browse__entry .browse__entry-name {
+  overflow: hidden;
+  flex: 1;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.browse__entry-formula {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.6875rem;
+}
+
+.detail {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  gap: 0.9rem;
+}
+
+.detail__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.detail__name {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.detail__facts {
+  display: grid;
+  padding: 0.6rem 0.75rem;
+  border-radius: 8px;
+  margin: 0;
+  background: var(--surface-sunken);
+  font-size: 0.8125rem;
+  gap: 0.15rem 0.75rem;
+  grid-template-columns: auto 1fr;
+}
+
+.detail__facts dt {
+  color: var(--text-muted);
+}
+
+.detail__facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.is-mono,
+.detail__facts dd.is-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.75rem;
+}
+
+.detail__section-title {
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid var(--border);
+  margin: 0 0 0.5rem;
+  font-size: 0.9375rem;
+}
+
+.detail__hint {
+  margin: -0.25rem 0 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+}
+
+.detail__names {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+  font-size: 0.8125rem;
+}
+
+.detail__listing,
+.detail__spectrum {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+}
+
+.detail__listing > header,
+.detail__spectrum > header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 0.4rem;
+  gap: 0.4rem;
+}
+
+.detail__listing-id {
+  color: var(--text-faint);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.6875rem;
+}
+
+.detail__listing-desc {
+  margin: 0 0 0.4rem;
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+}
+
+.detail__claims {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 1.25rem;
+  font-size: 0.8125rem;
+}
+
+.detail__claim {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+
+.detail__claim-label {
+  color: var(--text-muted);
+  font-size: 0.6875rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.detail__hazards,
+.detail__peaks {
+  margin-top: 0.4rem;
+  font-size: 0.8125rem;
+}
+
+.detail__hazards summary,
+.detail__peaks summary {
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.detail__hazards ul {
+  padding-left: 1.1rem;
+  margin: 0.3rem 0 0;
+}
+
+.detail__hazards li {
+  margin-bottom: 0.15rem;
+}
+
+.detail__peaks {
+  max-height: 22rem;
+  overflow-y: auto;
+}
+
+.detail__ranges {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.5rem;
+  font-size: 0.8125rem;
+}
+
+.detail__ranges th {
+  border-bottom: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 0.6875rem;
+  letter-spacing: 0.02em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.detail__ranges td {
+  padding: 0.2rem 0.5rem 0.2rem 0;
+  border-bottom: 1px solid var(--surface-sunken);
+  vertical-align: top;
+}
+
+/* ----------------------------------------------------------------- spectrum */
+
+.spectrum {
+  margin: 0;
+}
+
+.spectrum--loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.spectrum__svg {
+  display: block;
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.spectrum__trace {
+  fill: none;
+  stroke: var(--text);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.spectrum__band {
+  fill: color-mix(in oklab, var(--accent) 14%, transparent);
+}
+
+.spectrum__marker {
+  stroke-dasharray: 2 3;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.spectrum__axis {
+  stroke: var(--border-strong);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.spectrum__tick {
+  fill: var(--text-muted);
+  font-size: 11px;
+  text-anchor: middle;
+}
+
+.spectrum__caption {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 0.3rem;
+  color: var(--text-muted);
+  font-size: 0.6875rem;
+  gap: 0.3rem 1rem;
+}
+
+.spectrum__key {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.spectrum__swatch {
+  width: 0.7rem;
+  height: 0.2rem;
+  border-radius: 1px;
+}

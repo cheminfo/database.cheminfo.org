@@ -1,0 +1,14 @@
+.claude
+.env
+.git
+.github
+compose*.yaml
+coverage
+data
+dist
+e2e
+node_modules
+playwright-report
+playwright.config.ts
+scripts
+test-results

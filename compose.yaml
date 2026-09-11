@@ -1,0 +1,52 @@
+# Port-published deployment — publishes PORT on the host (the default mode).
+#
+# Used when COMPOSE_FILE is unset in .env. Run: docker compose up -d
+
+services:
+  database:
+    # Use the released image by default. To build locally instead, run:
+    #   docker compose up -d --build
+    image: ${IMAGE_NAME:-ghcr.io/cheminfo/database.cheminfo.org}:${IMAGE_TAG:-latest}
+    build: .
+    init: true
+    restart: unless-stopped
+    stop_grace_period: 30s
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    environment:
+      # The analytics snippet of this deployment, injected into every page by
+      # the entrypoint. Unset means nothing is loaded and nothing is counted.
+      TRACKING_SCRIPT: ${TRACKING_SCRIPT:-}
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16m
+      # Where the pages are served from once the entrypoint has written the
+      # analytics snippet into them; the root filesystem stays read-only. The
+      # build carries the SQLite dataset the browser downloads, so this holds a
+      # whole copy of it: 19 MB today, and room for the dataset to grow.
+      - /public:rw,noexec,nosuid,size=256m
+    # A tmpfs counts against the container's memory, and the copy above puts
+    # the whole build in one, so this sits above the 512m floor a page-only
+    # static site would take.
+    mem_limit: 768m
+    cpus: 1
+    pids_limit: 256
+    ulimits:
+      core: 0
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '10m'
+        max-file: '3'
+    ports:
+      - '127.0.0.1:${PORT:-10824}:80'
+
+    # What the server's deploy script probes before it keeps a new container.
+    healthcheck:
+      test: ['CMD', 'wget', '--spider', '-q', 'http://127.0.0.1:80/health']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

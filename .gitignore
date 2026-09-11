@@ -1,0 +1,25 @@
+node_modules
+coverage
+dist
+.DS_Store
+.idea
+.claude
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Local environment
+.env
+
+# Harvest cache: re-read from ChemExper by scripts/harvest, and not needed to
+# build the site — public/chem.sqlite is committed for that.
+data
+
+# Deploy state kept by the server's global deploy script
+.deploy
+
+# Playwright
+playwright-report
+test-results

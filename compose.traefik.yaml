@@ -1,0 +1,69 @@
+# Traefik deployment — no port published on the host.
+#
+# Requires an external Docker network named `traefik` hosting the reverse
+# proxy, with a `websecure` entrypoint and a `letsencrypt` cert resolver.
+#
+# Select with COMPOSE_FILE=compose.traefik.yaml in .env, then:
+#   docker compose up -d
+
+services:
+  database:
+    # Use the released image by default. To build locally instead, run:
+    #   docker compose up -d --build
+    image: ${IMAGE_NAME:-ghcr.io/cheminfo/database.cheminfo.org}:${IMAGE_TAG:-latest}
+    build: .
+    # What the server's deploy script probes before it keeps a new container.
+    healthcheck:
+      test: ['CMD', 'wget', '--spider', '-q', 'http://127.0.0.1:80/health']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    init: true
+    restart: unless-stopped
+    stop_grace_period: 30s
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    environment:
+      # The analytics snippet of this deployment, injected into every page by
+      # the entrypoint. Unset means nothing is loaded and nothing is counted.
+      TRACKING_SCRIPT: ${TRACKING_SCRIPT:-}
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16m
+      # Where the pages are served from once the entrypoint has written the
+      # analytics snippet into them; the root filesystem stays read-only. The
+      # build carries the SQLite dataset the browser downloads, so this holds a
+      # whole copy of it: 19 MB today, and room for the dataset to grow.
+      - /public:rw,noexec,nosuid,size=256m
+    # A tmpfs counts against the container's memory, and the copy above puts
+    # the whole build in one, so this sits above the 512m floor a page-only
+    # static site would take.
+    mem_limit: 768m
+    cpus: 1
+    pids_limit: 256
+    ulimits:
+      core: 0
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '10m'
+        max-file: '3'
+    # Only the proxy's network: nothing here talks to a sibling container, and
+    # naming `default` as well would have compose cut a second subnet out of a
+    # pool that runs out after a few dozen stacks on one host.
+    networks:
+      - traefik
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.docker.network=traefik'
+      - 'traefik.http.routers.database.rule=Host(`database.cheminfo.org`)'
+      - 'traefik.http.routers.database.entrypoints=websecure'
+      - 'traefik.http.routers.database.tls.certresolver=letsencrypt'
+      - 'traefik.http.services.database.loadbalancer.server.port=80'
+
+networks:
+  traefik:
+    external: true

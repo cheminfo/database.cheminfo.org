@@ -1,0 +1,18 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  release:
+    # Documentation: https://github.com/zakodium/workflows#release
+    uses: zakodium/workflows/.github/workflows/release.yml@release-v1
+    with:
+      npm: false
+      # The empty string puts release-please in manifest mode, so it reads
+      # release-please-config.json and .release-please-manifest.json from the
+      # repository root rather than an implicit node configuration.
+      release-type: ''
+    secrets:
+      github-token: ${{ secrets.BOT_TOKEN }}

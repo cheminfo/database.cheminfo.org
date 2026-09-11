@@ -1,0 +1,36 @@
+/**
+ * What this site says about itself: the record the shared About page is drawn
+ * from. The prose limits are checked by `aboutProblems` in the test suite, so
+ * this file never grows into a page nobody reads.
+ */
+
+import type { AboutContent } from 'react-cheminfo/core';
+import { PLATFORM_WORK, TEACHING_WORK } from 'react-cheminfo/core';
+
+/** The About record of database.cheminfo.org. */
+export const ABOUT: AboutContent = {
+  siteId: 'database',
+  what: 'Ask one real chemical dataset the same question in SQL and in Mango, in the browser, and compare the two answers.',
+  can: [
+    'Run SQL and CouchDB Mango queries over the same data, side by side.',
+    'Read the tables, their columns and their foreign keys as one diagram.',
+    'Follow a tutorial that preloads each step into both editors.',
+    'Solve exercises checked against the exact rows they expect.',
+    'Translate between the two languages with a printable cheatsheet.',
+    'Hand out any query as a link, or frame it in a course page.',
+  ],
+  paragraphs: [
+    'The database is a single SQLite file the browser fetches once and queries in place. Nothing is sent anywhere: the engine is compiled to WebAssembly and runs in the page, so a query over a few hundred thousand rows costs a page load and nothing more.',
+    'The same rows are loaded into PouchDB, which answers Mango selectors the way CouchDB does. So a question asked in two languages is asked of the same data, and the difference a student sees is the difference between the languages themselves.',
+  ],
+  credits: [
+    'sqlite-wasm',
+    'pouchdb',
+    'chemexper',
+    'react-cheminfo',
+    'blueprint',
+    'react',
+    'vite',
+  ],
+  cite: [TEACHING_WORK, PLATFORM_WORK],
+};

@@ -1,0 +1,59 @@
+{
+  "name": "database.cheminfo.org",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Query a real chemical dataset two ways — in SQL and in Mango — over the same tables, in the browser.",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cheminfo/database.cheminfo.org.git"
+  },
+  "scripts": {
+    "build": "vite build",
+    "check-tokens": "node node_modules/react-cheminfo/bin/check-tokens.mjs src",
+    "check-types": "tsc --noEmit",
+    "dev": "vite",
+    "eslint": "eslint .",
+    "eslint-fix": "eslint . --fix",
+    "prettier": "prettier --check .",
+    "prettier-write": "prettier --write .",
+    "preview": "vite preview",
+    "test": "npm run test-only && npm run check-types && npm run check-tokens && npm run eslint && npm run prettier",
+    "test-e2e": "playwright test",
+    "test-e2e-ui": "playwright test --ui",
+    "test-only": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@blueprintjs/core": "^6.18.0",
+    "@blueprintjs/icons": "^6.13.0",
+    "@preact/signals-react": "^3.12.0",
+    "@sqlite.org/sqlite-wasm": "^3.53.0-build1",
+    "events": "^3.3.0",
+    "jcampconverter": "^12.5.5",
+    "pouchdb-selector-core": "^9.0.0",
+    "react": "^19.2.8",
+    "react-cheminfo": "^0.11.0",
+    "react-dom": "^19.2.8",
+    "react-science": "^23.0.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1",
+    "@types/node": "^26.2.0",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.5",
+    "@vitejs/plugin-react": "^6.1.0",
+    "@vitest/coverage-v8": "^4.1.11",
+    "@zakodium/tsconfig": "^1.0.5",
+    "eslint": "^9.39.5",
+    "eslint-config-zakodium": "^20.1.0",
+    "prettier": "^3.9.6",
+    "typescript": "^6.0.3",
+    "vite": "^8.2.2",
+    "vitest": "^4.1.11"
+  },
+  "overrides": {
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  }
+}

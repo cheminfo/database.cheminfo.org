@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 216 32" width="216" height="32">
+  <rect x="0" y="0" width="32" height="32" rx="7" fill="#7c2d12" />
+  <path
+    d="M5.8 9.4v5.3a10.2 3.9 0 0 0 20.4 0V9.4a10.2 3.9 0 0 1-20.4 0Z"
+    fill="#ffffff"
+  />
+  <path
+    d="M5.8 17.4v5.3a10.2 3.9 0 0 0 20.4 0v-5.3a10.2 3.9 0 0 1-20.4 0Z"
+    fill="#ffffff"
+  />
+  <ellipse cx="16" cy="9.4" rx="10.2" ry="3.9" fill="#06b6d4" />
+  <text
+    x="42"
+    y="22"
+    font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+    font-size="19"
+    font-weight="700"
+    letter-spacing="-0.19"
+  >
+    <tspan fill="#7c2d12">database</tspan><tspan fill="#8a96a3">.</tspan><tspan fill="#0b6e85">cheminfo</tspan>
+  </text>
+</svg>
