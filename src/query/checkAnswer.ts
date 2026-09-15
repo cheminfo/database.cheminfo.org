@@ -1,18 +1,20 @@
 import type { Database } from '@sqlite.org/sqlite-wasm';
+import type { TestCaseResult, ValidationResult } from 'react-cheminfo/core';
+import { failedValidation, finishValidation } from 'react-cheminfo/core';
 
 import type { Exercise } from '../data/exercises.ts';
 
 import { runMango } from './runMango.ts';
 import { runSql } from './runSql.ts';
 
-export interface AnswerCheck {
-  /** Whether every requirement was met. */
-  passed: boolean;
-  /** One line per requirement, in the order they are checked. */
-  cases: Array<{ description: string; passed: boolean; reason: string }>;
-  /** What went wrong before any requirement could be checked. */
-  error: string | null;
+/** One graded requirement, named by the clause the exercise states. */
+export interface AnswerCase extends TestCaseResult {
+  /** What this case checks, one clause. */
+  description: string;
 }
+
+/** Whether every requirement was met, and one line saying why not. */
+export type AnswerCheck = ValidationResult<AnswerCase>;
 
 /**
  * Judge an attempt against what the exercise says its answer must be.
@@ -32,7 +34,7 @@ export function checkAnswer(
   query: string,
   context: { database: Database; documents: Array<Record<string, unknown>> },
 ): AnswerCheck {
-  const cases: AnswerCheck['cases'] = [];
+  const cases: AnswerCase[] = [];
   let rows: unknown[][];
   let columns: string[];
 
@@ -52,11 +54,9 @@ export function checkAnswer(
       rows = result.rows;
     }
   } catch (error) {
-    return {
-      passed: false,
-      cases: [],
-      error: error instanceof Error ? error.message : String(error),
-    };
+    return failedValidation(
+      error instanceof Error ? error.message : String(error),
+    );
   }
 
   cases.push({
@@ -66,6 +66,7 @@ export function checkAnswer(
       rows.length === exercise.expect.rowCount
         ? `${rows.length} rows`
         : `got ${rows.length} rows, expected ${exercise.expect.rowCount}`,
+    actual: `${rows.length} rows`,
   });
 
   if (exercise.expect.columns) {
@@ -79,6 +80,7 @@ export function checkAnswer(
       reason: same
         ? 'the columns match'
         : `got ${columns.join(', ') || '(none)'}`,
+      actual: columns.join(', '),
     });
   }
 
@@ -91,6 +93,7 @@ export function checkAnswer(
       reason: same
         ? 'the first row matches'
         : `got ${show(rows[0])}, expected ${show(wanted)}`,
+      actual: show(rows[0]),
     });
   }
 
@@ -100,10 +103,11 @@ export function checkAnswer(
       description: `${show(wanted)} is in the answer`,
       passed: found,
       reason: found ? 'it is there' : 'it is missing from the answer',
+      actual: null,
     });
   }
 
-  return { passed: cases.every((item) => item.passed), cases, error: null };
+  return finishValidation(cases);
 }
 
 function looksLikeMango(query: string): boolean {

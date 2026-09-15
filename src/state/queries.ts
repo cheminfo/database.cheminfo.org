@@ -8,13 +8,14 @@
  */
 
 import { signal } from '@preact/signals-react';
-import { persistBucket } from 'react-cheminfo/ui';
+import { persistBucket } from 'react-cheminfo/core';
 
 /** The query each editor opens on when the address and the store say nothing. */
-export const STARTING_SQL = `SELECT preferred_name AS name, formula, ROUND(molecular_weight, 2) AS mass
-FROM compounds
-WHERE molecular_weight < 100
-ORDER BY molecular_weight
+export const STARTING_SQL = `SELECT c.preferred_name AS name, c.formula, ROUND(s.molecular_weight, 2) AS mass
+FROM compounds c
+JOIN structures s ON s.compound_id = c.id
+WHERE s.molecular_weight < 100
+ORDER BY s.molecular_weight
 LIMIT 20;`;
 
 export const STARTING_MANGO = `{

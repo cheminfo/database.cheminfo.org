@@ -48,12 +48,12 @@ test('the record resolves against the shared registries', () => {
   ]);
 });
 
-test('the teaching and the platform papers are what it asks to be cited', () => {
+test('the platform and the teaching papers are what it asks to be cited', () => {
   const dois = (ABOUT.cite ?? []).map((work) => work.reference.doi);
 
   expect(dois).toStrictEqual([
-    '10.2533/chimia.2023.683',
     '10.2533/chimia.2025.66',
+    '10.2533/chimia.2023.683',
   ]);
 });
 

@@ -18,6 +18,7 @@ const ROOT = join(import.meta.dirname, '..');
 const { runSql } = await import(join(ROOT, 'src/query/runSql.ts'));
 const { runMango } = await import(join(ROOT, 'src/query/runMango.ts'));
 const { installReadOnlyAuthorizer } = await import(join(ROOT, 'src/data/loadDatabase.ts'));
+const { buildDocuments } = await import(join(ROOT, 'src/data/buildDocuments.ts'));
 
 const sqlite3 = await sqlite3InitModule();
 const bytes = new Uint8Array(readFileSync(join(ROOT, 'public/chem.sqlite')));
@@ -36,12 +37,7 @@ installReadOnlyAuthorizer(sqlite3, database);
 
 let documents;
 function getDocuments() {
-  if (!documents) {
-    documents = [];
-    const statement = database.prepare('SELECT doc FROM documents');
-    while (statement.step()) documents.push(JSON.parse(statement.get([])[0]));
-    statement.finalize();
-  }
+  documents ??= buildDocuments(database);
   return documents;
 }
 

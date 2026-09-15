@@ -31,8 +31,10 @@ test('a compound has several boiling points, each at its own pressure', async ({
   await page.goto('/');
   const editor = page.getByLabel('SQL query');
   await editor.fill(
-    `SELECT low_c, pressure_mmhg FROM boiling_point_claims
-     WHERE name = '1,2-Diaminocyclohexane' ORDER BY pressure_mmhg DESC`,
+    `SELECT b.low_c, b.pressure_mmhg FROM boiling_points b
+     JOIN catalog_entries e ON e.id = b.catalog_entry_id
+     JOIN compounds c ON c.id = e.compound_id
+     WHERE c.preferred_name = '1,2-Diaminocyclohexane' ORDER BY b.pressure_mmhg DESC`,
   );
   await page.getByRole('button', { name: 'Run' }).first().click();
   await expect(page.locator('.result__summary').first()).toContainText(
@@ -123,7 +125,7 @@ test('a tutorial step loads both editors and opens the playground', async ({
   page,
 }) => {
   await page.goto('/tutorial');
-  await page.getByRole('button', { name: '7', exact: true }).click();
+  await page.getByRole('button', { name: /^Step 7:/ }).click();
   await expect(page.locator('.tutorial__step-title')).toContainText('7.');
   await page.getByRole('button', { name: 'Open in the playground' }).click();
   await expect(page).toHaveURL(/\/$|\/\?/);
@@ -139,7 +141,7 @@ test('an exercise checks the answer as it is typed', async ({ page }) => {
   });
 
   await editor.fill(
-    'SELECT preferred_name AS name, formula, molecular_weight FROM compounds ORDER BY molecular_weight LIMIT 5',
+    'SELECT c.preferred_name AS name, c.formula, s.molecular_weight FROM compounds c JOIN structures s ON s.compound_id = c.id ORDER BY s.molecular_weight LIMIT 5',
   );
   await expect(page.locator('.exercise__done')).toContainText(
     'Every requirement is met.',
@@ -178,8 +180,8 @@ test('the schema diagram draws every table, and each box opens its columns', asy
   page,
 }) => {
   await page.goto('/schema');
-  await expect(page.locator('.schema__diagram .schema__node')).toHaveCount(20);
-  await expect(page.locator('.schema__diagram .schema__edge')).toHaveCount(20);
+  await expect(page.locator('.schema__diagram .schema__node')).toHaveCount(16);
+  await expect(page.locator('.schema__diagram .schema__edge')).toHaveCount(17);
   await page.locator('.schema__node[href="#table-nmr_couplings"]').click();
   await expect(page.locator('#table-nmr_couplings')).toBeInViewport();
 });

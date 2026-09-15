@@ -47,8 +47,10 @@ const UNSUPPORTED = new Set(['$keyMapMatch', '$text']);
  * Run a Mango query over an array of documents.
  *
  * This is CouchDB's own selector engine, the one PouchDB ships, so a selector
- * that works here works against a real CouchDB. What is missing is everything
- * a server provides and a page cannot: indexes, bookmarks, execution stats.
+ * that works here works against a real CouchDB — `mangoPouchdb.test.ts` runs
+ * every query the site teaches through PouchDB itself to keep it so. What is
+ * missing is everything a server provides and a page cannot: indexes,
+ * bookmarks, execution stats.
  * @param documents - The documents to query.
  * @param query - The Mango query.
  * @param options - Limits.
@@ -96,6 +98,10 @@ export function runMango(
   } catch (error) {
     throw new MangoError(readable(error));
   }
+
+  // CouchDB walks its documents in `_id` order, so that is the order a query
+  // without a sort returns and the order ties are broken in when it has one.
+  matched = matched.toSorted(compareIds);
 
   if (sort) {
     const sorter = createFieldSorter(sort);
@@ -207,6 +213,17 @@ function project(
     target[path.at(-1) as string] = structuredClone(value);
   }
   return out;
+}
+
+function compareIds(
+  a: Record<string, unknown>,
+  b: Record<string, unknown>,
+): number {
+  const left = a._id;
+  const right = b._id;
+  if (typeof left !== 'string' || typeof right !== 'string') return 0;
+  if (left < right) return -1;
+  return left > right ? 1 : 0;
 }
 
 function clampInteger(

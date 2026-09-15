@@ -9,11 +9,7 @@ CREATE TABLE compounds (
   id                 INTEGER PRIMARY KEY,
   id_code            TEXT NOT NULL,
   id_code_no_stereo  TEXT NOT NULL UNIQUE,
-  smiles             TEXT NOT NULL,
-  molfile            TEXT,
   formula            TEXT NOT NULL,
-  molecular_weight   REAL,
-  monoisotopic_mass  REAL,
   charge             INTEGER NOT NULL DEFAULT 0,
   unsaturation       REAL,
   nb_atoms           INTEGER,
@@ -21,11 +17,34 @@ CREATE TABLE compounds (
   preferred_name     TEXT
 );
 
-CREATE TABLE compound_elements (
-  id           INTEGER PRIMARY KEY,
-  compound_id  INTEGER NOT NULL REFERENCES compounds(id) ON DELETE CASCADE,
-  symbol       TEXT NOT NULL,
-  count        INTEGER NOT NULL
+-- The structure a compound is drawn as, the masses computed from it, and its
+-- substructure index: OpenChemLib's 512-bit fingerprint as sixteen unsigned
+-- 32-bit words, bit 0 being the high bit of index00. A query can only be found
+-- in a structure holding every bit the query holds, so
+-- `(index00 & q) = q AND …` screens candidates before any atom is compared.
+CREATE TABLE structures (
+  id                 INTEGER PRIMARY KEY,
+  compound_id        INTEGER NOT NULL UNIQUE REFERENCES compounds(id) ON DELETE CASCADE,
+  molfile            TEXT,
+  canonical_smiles   TEXT NOT NULL,
+  molecular_weight   REAL,
+  monoisotopic_mass  REAL,
+  index00            INTEGER NOT NULL,
+  index01            INTEGER NOT NULL,
+  index02            INTEGER NOT NULL,
+  index03            INTEGER NOT NULL,
+  index04            INTEGER NOT NULL,
+  index05            INTEGER NOT NULL,
+  index06            INTEGER NOT NULL,
+  index07            INTEGER NOT NULL,
+  index08            INTEGER NOT NULL,
+  index09            INTEGER NOT NULL,
+  index10            INTEGER NOT NULL,
+  index11            INTEGER NOT NULL,
+  index12            INTEGER NOT NULL,
+  index13            INTEGER NOT NULL,
+  index14            INTEGER NOT NULL,
+  index15            INTEGER NOT NULL
 );
 
 CREATE TABLE names (
@@ -150,22 +169,10 @@ CREATE TABLE nmr_couplings (
   multiplicity   TEXT
 );
 
--- The same compound, nested, for the Mango side of the playground.
-CREATE TABLE documents (
-  compound_id  INTEGER PRIMARY KEY REFERENCES compounds(id) ON DELETE CASCADE,
-  doc          TEXT NOT NULL
-);
-
-CREATE TABLE meta (
-  key    TEXT PRIMARY KEY,
-  value  TEXT NOT NULL
-);
-
+CREATE INDEX idx_structures_weight     ON structures(molecular_weight);
 CREATE INDEX idx_names_compound        ON names(compound_id);
 CREATE INDEX idx_names_value           ON names(value);
 CREATE INDEX idx_names_language        ON names(language);
-CREATE INDEX idx_elements_compound     ON compound_elements(compound_id);
-CREATE INDEX idx_elements_symbol       ON compound_elements(symbol);
 CREATE INDEX idx_cas_compound          ON cas_numbers(compound_id);
 CREATE INDEX idx_entries_compound      ON catalog_entries(compound_id);
 CREATE INDEX idx_mp_entry              ON melting_points(catalog_entry_id);
@@ -182,34 +189,3 @@ CREATE INDEX idx_nmr_compound          ON nmr_spectra(compound_id);
 CREATE INDEX idx_nmr_ranges_spectrum   ON nmr_ranges(nmr_spectrum_id);
 CREATE INDEX idx_nmr_signals_range     ON nmr_signals(nmr_range_id);
 CREATE INDEX idx_nmr_couplings_signal  ON nmr_couplings(nmr_signal_id);
-
--- One row per compound, with the counts a student most often wants first.
-CREATE VIEW compound_overview AS
-SELECT
-  c.id,
-  c.preferred_name AS name,
-  c.formula,
-  c.molecular_weight,
-  c.smiles,
-  c.nb_suppliers,
-  (SELECT COUNT(*) FROM names n WHERE n.compound_id = c.id)            AS nb_names,
-  (SELECT COUNT(*) FROM catalog_entries e WHERE e.compound_id = c.id)  AS nb_listings,
-  (SELECT COUNT(*) FROM ir_spectra s WHERE s.compound_id = c.id)       AS nb_ir_spectra,
-  (SELECT COUNT(*) FROM nmr_spectra s WHERE s.compound_id = c.id)      AS nb_nmr_spectra
-FROM compounds c;
-
--- Every boiling point ever listed for a compound, with the pressure it was
--- measured at and the supplier who claims it.
-CREATE VIEW boiling_point_claims AS
-SELECT
-  c.id AS compound_id,
-  c.preferred_name AS name,
-  c.formula,
-  b.low_c,
-  b.high_c,
-  b.pressure_mmhg,
-  e.supplier,
-  e.entry_id
-FROM boiling_points b
-JOIN catalog_entries e ON e.id = b.catalog_entry_id
-JOIN compounds c       ON c.id = e.compound_id;

@@ -6,6 +6,7 @@ import unicorn from 'eslint-config-zakodium/unicorn';
 
 export default defineConfig(
   globalIgnores([
+    '.claude',
     'coverage',
     'dist',
     // The harvest pipeline that fills data/ and builds public/chem.sqlite. It

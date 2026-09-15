@@ -27,6 +27,7 @@ export const REPOSITORY = 'https://github.com/cheminfo/database.cheminfo.org';
 export type TabId =
   | 'playground'
   | 'browse'
+  | 'substructure'
   | 'tutorial'
   | 'exercises'
   | 'schema'
@@ -78,6 +79,16 @@ const ROUTE_TABLE = [
     note: 'the rows themselves, and the spectra drawn',
     description:
       'Look through all 541 compounds one at a time: every name and language, every supplier listing and its claims, and the IR and NMR spectra drawn.',
+  },
+  {
+    path: '/substructure',
+    tab: 'substructure',
+    label: 'Substructure',
+    title: 'Substructure search and its 512-bit index',
+    short: 'Substructure',
+    note: 'the bits that screen, then the atoms that decide',
+    description:
+      'Draw a fragment and see which of the 512 index bits it sets, the key fragments behind them, and how SQL screens the compounds before any atom is compared.',
   },
   {
     path: '/tutorial',

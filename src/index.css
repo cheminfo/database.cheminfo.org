@@ -30,20 +30,36 @@ body {
   flex-direction: column;
 }
 
-/* The page owns the screen it opens on, so the family links below it are always
-   reached by scrolling rather than sitting in the middle of a short page. */
+/* The header and the page own the screen they open on, so the family links
+   below them are always reached by scrolling. */
+.app-screen {
+  display: flex;
+  min-height: 100dvh;
+  flex-direction: column;
+}
+
+.app-screen > main {
+  flex: 1 1 auto;
+}
+
 .app-shell {
   width: 100%;
   max-width: var(--page-max);
-  min-height: calc(100dvh - var(--header-height));
   padding: 16px 1.25rem 24px;
   margin: 0 auto;
+}
+
+/* A phone: the panels already carry their own padding, so the page keeps only
+   a thin gutter rather than stacking a second one outside them. */
+@media (max-width: 40rem) {
+  .app-shell {
+    padding-inline: 0.5rem;
+  }
 }
 
 /* Framed in another site: the frame is the margin, and it is usually narrow. */
 .app-shell--embedded {
   max-width: none;
-  min-height: 0;
   padding: 8px;
 }
 
@@ -165,89 +181,157 @@ body {
   white-space: pre;
 }
 
-/* ------------------------------------------------------------------- results */
+/* ------------------------------------------------------------------- results
 
-.result {
+   A result is printed the way a command line prints it: the prompt, the query
+   echoed in colour, then the output. The colours are a terminal's, identical in
+   light and dark, so they are subject matter and not family tokens.
+*/
+
+.terminal {
+  --terminal-background: #0a0e0a; /* tokens-ok */
+  --terminal-text: #3dfc72; /* tokens-ok */
+  --terminal-dim: #3aa65e; /* tokens-ok */
+  --terminal-rule: #1f4d2c; /* tokens-ok */
+  --terminal-key: #7fdcff; /* tokens-ok */
+  --terminal-string: #ffd479; /* tokens-ok */
+  --terminal-number: #d0a8ff; /* tokens-ok */
+  --terminal-operator: #ff8ccf; /* tokens-ok */
+  --terminal-error: #ff6e6e; /* tokens-ok */
+
   display: flex;
   min-width: 0;
   flex-direction: column;
-  gap: 0.35rem;
-}
-
-.result__summary {
-  margin: 0;
-  color: var(--text-muted);
-  font-size: 0.8125rem;
-}
-
-.result__scroll {
-  overflow-x: auto;
-  max-height: 26rem;
-  border: 1px solid var(--border);
+  padding: 0.75rem 0.875rem;
   border-radius: var(--radius);
-  overflow-y: auto;
-}
-
-.result__scroll table {
-  width: 100%;
-}
-
-.result__scroll th {
-  position: sticky;
-  z-index: 1;
-  top: 0;
-  background: var(--surface);
-  font-size: 0.75rem;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-}
-
-.result__scroll td {
-  max-width: 28rem;
+  background: var(--terminal-background);
+  color: var(--terminal-text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 0.8125rem;
-  vertical-align: top;
-}
-
-.cell--number {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  text-align: right;
-}
-
-.cell__null {
-  color: var(--text-faint);
-  font-style: italic;
-}
-
-.result__error,
-.result__empty {
-  font-size: 0.875rem;
-}
-
-.json-doc {
-  padding: 0.6rem 0.75rem;
-  border-bottom: 1px solid var(--border);
-  margin: 0;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 0.75rem;
+  gap: 0.5rem;
   line-height: 1.5;
+}
+
+.terminal pre,
+.terminal code {
+  font: inherit;
+}
+
+.terminal__command {
+  margin: 0;
   white-space: pre-wrap;
   word-break: break-word;
 }
 
-.json-doc--folded {
-  padding: 0;
+.terminal__prompt {
+  color: var(--terminal-dim);
+  font-weight: 700;
+}
+
+.terminal .query-code__keyword {
+  color: var(--terminal-key);
+  font-weight: 700;
+}
+
+.terminal .query-code__key {
+  color: var(--terminal-key);
+  font-weight: 400;
+}
+
+.terminal .query-code__operator {
+  color: var(--terminal-operator);
+  font-weight: 700;
+}
+
+.terminal .query-code__string {
+  color: var(--terminal-string);
+}
+
+.terminal .query-code__number {
+  color: var(--terminal-number);
+}
+
+.terminal .query-code__comment {
+  color: var(--terminal-dim);
+}
+
+.terminal__scroll {
+  max-height: 26rem;
+  overflow: auto;
+}
+
+.terminal-table {
+  border-collapse: collapse;
+}
+
+.terminal-table th,
+.terminal-table td {
+  max-width: 28rem;
+  padding: 0.05rem 0.6rem;
+  border: 1px solid var(--terminal-rule);
+  text-align: left;
+  vertical-align: top;
+}
+
+.terminal-table th {
+  position: sticky;
+  z-index: 1;
+  top: 0;
+  background: var(--terminal-background);
+  box-shadow: inset 0 -1px 0 var(--terminal-dim);
+  font-weight: 700;
+}
+
+.terminal-table .cell--number {
+  color: var(--terminal-number);
+  text-align: right;
+}
+
+.terminal-table .cell--null {
+  color: var(--terminal-dim);
+  font-style: italic;
+}
+
+.terminal__status,
+.terminal__note {
+  margin: 0;
+  color: var(--terminal-dim);
+}
+
+.terminal__note code {
+  color: var(--terminal-operator);
+}
+
+.terminal__error {
+  margin: 0;
+  color: var(--terminal-error);
+  white-space: pre-wrap;
+}
+
+.json-doc {
+  padding: 0.35rem 0;
+  border-bottom: 1px dashed var(--terminal-rule);
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.json-doc:last-child {
+  border-bottom: 0;
 }
 
 .json-doc--folded > summary {
-  padding: 0.5rem 0.75rem;
+  color: var(--terminal-dim);
   cursor: pointer;
-  font-family: inherit;
-  font-size: 0.8125rem;
+}
+
+.json-doc--folded > summary:hover,
+.json-doc--folded[open] > summary {
+  color: var(--terminal-text);
 }
 
 .json-doc--folded > pre {
-  padding: 0 0.75rem 0.6rem;
-  margin: 0;
+  margin: 0.25rem 0 0;
   white-space: pre-wrap;
   word-break: break-word;
 }
@@ -419,11 +503,21 @@ button {
   background: var(--surface);
 }
 
-.schema__diagram svg {
+/* Boxes are HTML placed in percent of the canvas, and their text is sized in
+   container units, so they scale with the SVG the arrows are drawn in. */
+.schema__canvas {
+  position: relative;
+  min-width: 50rem;
+  container-type: inline-size;
+}
+
+.schema__canvas svg {
+  position: absolute;
   display: block;
   width: 100%;
-  min-width: 50rem;
-  height: auto;
+  height: 100%;
+  inset: 0;
+  overflow: visible;
 }
 
 .schema__diagram figcaption {
@@ -433,31 +527,41 @@ button {
   font-size: 0.8125rem;
 }
 
-.schema__node rect {
-  fill: var(--surface);
-  stroke: var(--border-strong);
-  stroke-width: 1;
+.schema__node {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--surface);
+  line-height: 1.25;
+  text-decoration: none;
 }
 
-.schema__node--view rect {
-  stroke-dasharray: 5 4;
+.schema__node--view {
+  border-style: dashed;
 }
 
-.schema__node:hover rect {
-  fill: color-mix(in oklab, var(--accent) 10%, white);
-  stroke: var(--accent);
+.schema__node:hover,
+.schema__node:focus-visible,
+.schema__node[data-open='true'] {
+  border-color: var(--accent);
+  background: color-mix(in oklab, var(--accent) 10%, var(--surface));
+  text-decoration: none;
 }
 
 .schema__node-name {
-  fill: var(--accent);
+  color: var(--accent);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 13.5px;
+  font-size: calc(1250cqw / var(--schema-width));
   font-weight: 700;
 }
 
 .schema__node-rows {
-  fill: var(--text-faint);
-  font-size: 11px;
+  color: var(--text-faint);
+  font-size: calc(1050cqw / var(--schema-width));
 }
 
 .schema__edge {
@@ -470,8 +574,49 @@ button {
   stroke-dasharray: 5 4;
 }
 
+.schema__edge--secondary {
+  stroke-opacity: 0.6;
+}
+
 .schema__arrow-head {
   fill: var(--border-strong);
+}
+
+.schema__cardinality {
+  fill: var(--text-muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.schema__tip {
+  max-width: 28rem;
+}
+
+.schema__tip-title {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-weight: 700;
+}
+
+.schema__tip-blurb {
+  margin: 0.125rem 0 0.375rem;
+  opacity: 0.8;
+}
+
+.schema__tip-columns {
+  border-collapse: collapse;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.75rem;
+}
+
+.schema__tip-columns td {
+  padding: 0.0625rem 0.75rem 0.0625rem 0;
+  vertical-align: top;
+  white-space: nowrap;
+}
+
+.schema__tip-type,
+.schema__tip-key {
+  opacity: 0.75;
 }
 
 .schema__reference {
@@ -490,61 +635,6 @@ button {
   max-width: 66rem;
   flex-direction: column;
   gap: 1rem;
-}
-
-.tutorial__strip {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  padding: 0.6rem 0.875rem;
-  border-radius: var(--radius);
-  gap: 0.5rem 1rem;
-}
-
-/* The three groups are the pedagogic order, so they carry the status hues
-   rather than the brand: green is where everyone starts. */
-.tutorial__strip--beginner {
-  background: color-mix(in oklab, var(--success) 10%, white);
-}
-
-.tutorial__strip--intermediate {
-  background: color-mix(in oklab, var(--warning) 12%, white);
-}
-
-.tutorial__strip--advanced {
-  background: color-mix(in oklab, var(--danger) 9%, white);
-}
-
-.tutorial__strip-head {
-  min-width: 15rem;
-  flex: 1 1 15rem;
-}
-
-.tutorial__strip-title {
-  margin: 0;
-  font-size: 0.9375rem;
-  font-weight: 700;
-}
-
-.tutorial__strip-blurb {
-  margin: 0;
-  color: var(--text-muted);
-  font-size: 0.8125rem;
-}
-
-.tutorial__numbers {
-  display: flex;
-  flex-wrap: wrap;
-  padding: 0;
-  margin: 0;
-  gap: 0.3rem;
-  list-style: none;
-}
-
-.tutorial__number.bp6-button {
-  min-width: 2.1rem;
-  font-variant-numeric: tabular-nums;
-  font-weight: 700;
 }
 
 .tutorial__step {
@@ -602,8 +692,7 @@ button {
 }
 
 .tutorial__query pre,
-.exercise__solution pre,
-.cheatsheet__example {
+.exercise__solution pre {
   overflow-x: auto;
   padding: 0.6rem 0.75rem;
   border: 1px solid var(--border);
@@ -615,10 +704,39 @@ button {
   line-height: 1.5;
 }
 
-.tutorial__pager {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
+/* --------------------------------------------------------------- query code */
+
+.query-code pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  line-height: 1.5;
+}
+
+.query-code__keyword {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.query-code__operator {
+  color: var(--brand-alt);
+  font-weight: 600;
+}
+
+.query-code__key {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.query-code__string {
+  color: var(--brand-alt);
+}
+
+.query-code__number {
+  color: var(--accent);
+}
+
+.query-code__comment {
+  color: var(--text-faint);
+  font-style: italic;
 }
 
 /* ------------------------------------------------------------------ glossary */
@@ -676,12 +794,12 @@ button {
   display: grid;
   align-items: start;
   gap: 1rem;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
 }
 
 @media (min-width: 62rem) {
   .exercises__body {
-    grid-template-columns: 20rem 1fr;
+    grid-template-columns: 20rem minmax(0, 1fr);
   }
 }
 
@@ -689,19 +807,45 @@ button {
   display: flex;
   max-height: 40rem;
   flex-direction: column;
-  padding: 0;
+  padding: 0 0.25rem 0 0;
   margin: 0;
-  gap: 0.2rem;
+  gap: 0.25rem;
   list-style: none;
+  overflow-x: hidden;
   overflow-y: auto;
 }
 
-.exercises__entry .exercises__entry-title {
-  overflow: hidden;
-  flex: 1;
+/* Title on its own wrapping line, tags under it: a long title on one line with
+   its tags beside it is what made the list scroll sideways. */
+.exercises__entry.bp6-button {
+  min-height: 0;
+  align-items: flex-start;
+  padding: 0.45rem 0.6rem;
+}
+
+.exercises__entry.bp6-button > .bp6-icon {
+  margin-top: 0.1rem;
+}
+
+.exercises__entry .bp6-button-text {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.exercises__entry-title {
+  line-height: 1.3;
+  overflow-wrap: anywhere;
   text-align: left;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+}
+
+.exercises__entry-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
 }
 
 .exercise {
@@ -747,11 +891,19 @@ button {
   list-style: none;
 }
 
+/* The reason goes under its requirement, not beside it: a long reason squeezed
+   into a third column wraps into a narrow ragged block. */
 .exercise__cases li {
-  display: flex;
+  display: grid;
   align-items: baseline;
-  padding: 0.2rem 0;
-  gap: 0.5rem;
+  padding: 0.25rem 0;
+  column-gap: 0.5rem;
+  grid-template-columns: 1rem minmax(0, 1fr);
+}
+
+.exercise__cases li > .exercise__case-reason {
+  grid-column: 2;
+  overflow-wrap: anywhere;
 }
 
 .exercise__cases .is-pass .exercise__case-mark {
@@ -773,6 +925,11 @@ button {
 }
 
 /* --------------------------------------------------------------- cheatsheet */
+
+/* Two columns of multi-line queries need the whole page, not the reading width. */
+.cheatsheet {
+  max-width: none;
+}
 
 .cheatsheet__section-title {
   padding-bottom: 0.3rem;
@@ -848,11 +1005,13 @@ button {
   gap: 0.75rem;
 }
 
+/* `minmax(0, …)`: a bare `1fr` column grows to its longest compound name, which
+   no longer ellipsises and pushes the list past a phone's edge. */
 .browse__body {
   display: grid;
   align-items: start;
   gap: 1rem;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
 }
 
 @media (min-width: 62rem) {
@@ -894,8 +1053,7 @@ button {
 }
 
 .browse__entry-formula {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
 }
 
 .detail {
@@ -1134,4 +1292,165 @@ button {
   width: 0.7rem;
   height: 0.2rem;
   border-radius: 1px;
+}
+
+/* ------------------------------------------------------------- substructure */
+
+.substructure {
+  display: flex;
+  max-width: 72rem;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.substructure__lead {
+  max-width: 54rem;
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.substructure__examples {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.substructure__workbench {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 60rem) {
+  .substructure__workbench {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
+.substructure__panel,
+.substructure__section {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.substructure__panel {
+  padding: 0.875rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.substructure__heading {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.substructure__note,
+.substructure__funnel {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+}
+
+.substructure__note a {
+  color: var(--accent);
+}
+
+.substructure__figure {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0;
+  gap: 0.25rem;
+}
+
+.index-grid {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.index-grid__label {
+  fill: var(--text-faint);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 10px;
+}
+
+.index-grid__cell {
+  fill: var(--surface-sunken);
+  stroke: var(--border);
+  stroke-width: 0.5;
+}
+
+.index-grid__cell--on {
+  cursor: pointer;
+  fill: var(--accent);
+  stroke: none;
+}
+
+.index-grid__cell--selected {
+  stroke: var(--text);
+  stroke-width: 2;
+}
+
+.index-fragments,
+.substructure__hits {
+  display: grid;
+  padding: 0;
+  margin: 0;
+  gap: 0.5rem;
+  list-style: none;
+}
+
+.index-fragments {
+  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+}
+
+.substructure__hits {
+  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+}
+
+.index-fragments__item,
+.substructure__hit {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: inherit;
+  font: inherit;
+  font-size: 0.8125rem;
+  gap: 0.2rem;
+  text-align: center;
+}
+
+.index-fragments__item {
+  cursor: pointer;
+}
+
+.index-fragments__item:hover,
+.index-fragments__item[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: color-mix(in oklab, var(--accent) 10%, var(--surface));
+}
+
+.index-fragments__bit {
+  font-weight: 700;
+}
+
+.index-fragments__mask {
+  color: var(--text-muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.6875rem;
+}
+
+.substructure__hit a {
+  color: var(--accent);
 }

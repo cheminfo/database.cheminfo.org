@@ -6,7 +6,7 @@ one real dataset, in the browser.
 A student opens the page, a SQLite database of 541 catalogued substances
 downloads once, and both editors run against it locally. Nothing is sent back:
 the SQL runs in SQLite compiled to WebAssembly, and the Mango runs against the
-same rows nested into one JSON document per compound. Putting the two shapes
+same rows, folded in the page into one JSON document per compound. Putting the two shapes
 side by side is the point — the tables show why a boiling point needs a pressure
 column, and the documents show what a join looks like when there is nothing to
 join.
@@ -16,17 +16,18 @@ join.
 Everything comes from [ChemExper](https://www.chemexper.com), and nothing is
 simulated.
 
-|                                                            |                       |
-| ---------------------------------------------------------- | --------------------- |
-| Compounds                                                  | 541                   |
-| Names, in English, German and French                       | 2,033                 |
-| Catalogue listings                                         | 1,049                 |
-| Melting points · boiling points · densities · flash points | 736 · 558 · 434 · 106 |
-| Hazard statements (GHS, R- and S-phrases)                  | 7,428                 |
-| IR spectra, with their original JCAMP-DX                   | 171                   |
-| IR bands — the supplier's own, and peaks picked here       | 4,463                 |
-| 1H NMR spectra, with their original JCAMP-DX               | 50                    |
-| NMR ranges → signals → coupling constants                  | 292 → 307 → 197       |
+|                                                               |                       |
+| ------------------------------------------------------------- | --------------------- |
+| Compounds                                                     | 541                   |
+| Structures — molfile, SMILES, molecular and monoisotopic mass | 541                   |
+| Names, in English, German and French                          | 2,033                 |
+| Catalogue listings                                            | 1,049                 |
+| Melting points · boiling points · densities · flash points    | 736 · 558 · 434 · 106 |
+| Hazard statements (GHS, R- and S-phrases)                     | 7,423                 |
+| IR spectra, with their original JCAMP-DX                      | 171                   |
+| IR bands — the supplier's own, and peaks picked here          | 4,463                 |
+| 1H NMR spectra, with their original JCAMP-DX                  | 50                    |
+| NMR ranges → signals → coupling constants                     | 292 → 307 → 197       |
 
 **Prices are removed.** There is no price, currency or quantity column anywhere,
 and no document mentions one. The site teaches querying, not purchasing.
@@ -39,10 +40,12 @@ point is a claim made by one supplier about one catalogue entry, so it hangs off
 point and you get a **set**:
 
 ```sql
-SELECT low_c, pressure_mmhg, supplier
-FROM boiling_point_claims
-WHERE name = '1,2-Diaminocyclohexane'
-ORDER BY pressure_mmhg DESC;
+SELECT b.low_c, b.pressure_mmhg, e.supplier
+FROM boiling_points b
+JOIN catalog_entries e ON e.id = b.catalog_entry_id
+JOIN compounds c ON c.id = e.compound_id
+WHERE c.preferred_name = '1,2-Diaminocyclohexane'
+ORDER BY b.pressure_mmhg DESC;
 --  188 °C @ 760 mmHg
 --  104 °C @  40 mmHg
 --   79 °C @  15 mmHg
@@ -68,7 +71,6 @@ from it.
 The stored NMR JCAMP-DX keeps the header, the NTUPLES declaration and the real
 page of the Bruker export. The instrument parameter block, the audit trail and
 the imaginary page are dropped — 60 % of the bytes, none of the measurement.
-`meta` records this in the database itself.
 
 ### Known rough edges in the source
 

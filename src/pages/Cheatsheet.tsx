@@ -1,6 +1,8 @@
 import { HTMLTable } from '@blueprintjs/core';
 import type { ReactElement } from 'react';
 
+import { GlossaryText } from '../components/GlossaryText.tsx';
+import { QueryCode } from '../components/QueryCode.tsx';
 import type { CheatRow } from '../data/cheatsheet.ts';
 import { CHEAT_SECTIONS } from '../data/cheatsheet.ts';
 
@@ -51,22 +53,48 @@ function Row({ row }: { row: CheatRow }): ReactElement {
     <tr>
       <td className="cheatsheet__concept">
         {row.concept}
-        {row.note ? <span className="cheatsheet__note">{row.note}</span> : null}
+        {row.note ? (
+          <span className="cheatsheet__note">
+            <GlossaryText>{row.note}</GlossaryText>
+          </span>
+        ) : null}
       </td>
       <td>
-        <code className="cheatsheet__code">{row.sql}</code>
+        <QueryCode
+          code={row.sql}
+          language="sql"
+          tone="default"
+          className="cheatsheet__code"
+        />
         {row.example?.sql ? (
-          <pre className="cheatsheet__example">{row.example.sql}</pre>
+          <QueryCode
+            code={row.example.sql}
+            language="sql"
+            format
+            copyable
+            className="cheatsheet__example"
+          />
         ) : null}
       </td>
       <td>
         {row.mango ? (
-          <code className="cheatsheet__code">{row.mango}</code>
+          <QueryCode
+            code={row.mango}
+            language="mango"
+            tone="default"
+            className="cheatsheet__code"
+          />
         ) : (
           <span className="cheatsheet__absent">no spelling</span>
         )}
         {row.example?.mango ? (
-          <pre className="cheatsheet__example">{row.example.mango}</pre>
+          <QueryCode
+            code={row.example.mango}
+            language="mango"
+            format
+            copyable
+            className="cheatsheet__example"
+          />
         ) : null}
       </td>
     </tr>

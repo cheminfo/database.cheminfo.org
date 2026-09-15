@@ -2,6 +2,7 @@ import { Button, Tag } from '@blueprintjs/core';
 import type { Database, SqlValue } from '@sqlite.org/sqlite-wasm';
 import type { ReactElement } from 'react';
 import { useMemo } from 'react';
+import { formatInteger } from 'react-cheminfo/core';
 
 import { useDatabase } from '../data/useDatabase.ts';
 
@@ -52,7 +53,7 @@ export function TableList(props: TableListProps): ReactElement | null {
               {table.name}
             </Button>
             <Tag minimal className="table-list__count">
-              {table.rows.toLocaleString('en')}
+              {formatInteger(table.rows)}
             </Tag>
             {table.kind === 'view' ? (
               <Tag minimal intent="primary">

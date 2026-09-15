@@ -8,36 +8,24 @@
  */
 
 import { signal } from '@preact/signals-react';
-import { persistBucket } from 'react-cheminfo/ui';
-
-/** Where an attempt stands. */
-export type ExerciseStatus = 'idle' | 'attempted' | 'solved';
-
-export interface ExerciseAttempt {
-  /** What the student last typed. */
-  query: string;
-  /** Where the attempt stands. */
-  status: ExerciseStatus;
-  /** How many hints have been shown. */
-  hintsRevealed: number;
-  /** Whether the solution is on screen. */
-  showSolution: boolean;
-}
+import type { ExerciseProgress, ProgressRecords } from 'react-cheminfo/core';
+import { localStorageProgressStore } from 'react-cheminfo/core';
 
 /** What an exercise looks like before anything has been typed into it. */
-export function emptyAttempt(): ExerciseAttempt {
-  return { query: '', status: 'idle', hintsRevealed: 0, showSolution: false };
+export function emptyAttempt(): ExerciseProgress {
+  return { status: 'idle', answer: '', hintsRevealed: 0, showSolution: false };
 }
 
-const store = persistBucket<{ attempts: Record<string, ExerciseAttempt> }>({
+// Version 2: the record the shared store keeps names the student's text
+// `answer`, where this site used to call it `query`.
+const store = localStorageProgressStore<ExerciseProgress>({
   key: 'database:exercises',
-  defaults: { attempts: {} },
+  version: 2,
+  defaults: emptyAttempt(),
 });
 
 /** Every attempt this browser remembers, keyed by exercise id. */
-export const attempts = signal<Record<string, ExerciseAttempt>>(
-  store.read().value.attempts,
-);
+export const attempts = signal<ProgressRecords>(readStore());
 
 /**
  * Read one exercise's attempt, filling in anything a previous version did not
@@ -45,8 +33,8 @@ export const attempts = signal<Record<string, ExerciseAttempt>>(
  * @param id - The exercise.
  * @returns Its attempt.
  */
-export function attemptFor(id: string): ExerciseAttempt {
-  return { ...emptyAttempt(), ...attempts.value[id] };
+export function attemptFor(id: string): ExerciseProgress {
+  return attempts.value[id] ?? emptyAttempt();
 }
 
 /**
@@ -56,15 +44,22 @@ export function attemptFor(id: string): ExerciseAttempt {
  */
 export function updateAttempt(
   id: string,
-  change: Partial<ExerciseAttempt>,
+  change: Partial<ExerciseProgress>,
 ): void {
   const next = { ...attempts.value, [id]: { ...attemptFor(id), ...change } };
   attempts.value = next;
-  store.write({ attempts: next });
+  void store.save(next);
 }
 
 /** Forget every attempt. */
 export function clearAttempts(): void {
   attempts.value = {};
-  store.write({ attempts: {} });
+  void store.save({});
+}
+
+function readStore(): ProgressRecords {
+  // The browser binding answers synchronously. A binding that answered over
+  // the network would have to fill this signal after the page had opened.
+  const loaded = store.load();
+  return loaded instanceof Promise ? {} : loaded;
 }

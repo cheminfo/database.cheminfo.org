@@ -1,6 +1,13 @@
 import { Callout, Spinner } from '@blueprintjs/core';
 import type { ReactElement } from 'react';
 import { useEffect, useMemo, useState } from 'react';
+import {
+  chartAxisScale,
+  chartPadExtent,
+  chartPixel,
+  chartScale,
+  formatInteger,
+} from 'react-cheminfo/core';
 
 import type { Trace } from './spectrumTrace.ts';
 import { buildTrace, tracePath } from './spectrumTrace.ts';
@@ -45,6 +52,12 @@ export interface SpectrumChartProps {
 
 const PLOT_WIDTH = 1000;
 const MARGIN = { top: 18, right: 12, bottom: 26, left: 12 };
+
+/** Roughly how many labelled wavenumbers or shifts the axis carries. */
+const TICK_COUNT = 8;
+
+/** Room left above the tallest peak and below the deepest trough. */
+const Y_PADDING = 0.06;
 
 /** One parse, remembered together with the file it was made from. */
 interface ParseResult {
@@ -142,18 +155,27 @@ export function SpectrumChart(props: SpectrumChartProps): ReactElement {
   }
 
   const plotHeight = height - MARGIN.top - MARGIN.bottom;
-  const pad = (trace.yMax - trace.yMin) * 0.06 || 1;
-  const yFrom = trace.yMin - pad;
-  const yTo = trace.yMax + pad;
-  const span = trace.xMax - trace.xMin || 1;
-  // Both a wavenumber and a chemical shift are read right to left.
-  const toX = (value: number): number =>
-    MARGIN.left + (1 - (value - trace.xMin) / span) * PLOT_WIDTH;
+  const { min: yFrom, max: yTo } = chartPadExtent(
+    { min: trace.yMin, max: trace.yMax },
+    Y_PADDING,
+  );
+  // Both a wavenumber and a chemical shift are read right to left, which is
+  // the reversed domain rather than a flip of its own.
+  const xScale = chartScale(
+    trace.xMax,
+    trace.xMin,
+    MARGIN.left,
+    MARGIN.left + PLOT_WIDTH,
+  );
+  const toX = (value: number): number => chartPixel(xScale, value);
 
   const colorOf = (kind: string): string =>
     legend.find((item) => item.kind === kind)?.color ?? 'var(--accent)';
 
-  const ticks = axisTicks(trace.xMin, trace.xMax);
+  const axis = chartAxisScale(trace.xMin, trace.xMax, {
+    count: TICK_COUNT,
+    nice: false,
+  });
 
   return (
     <figure className="spectrum">
@@ -211,7 +233,7 @@ export function SpectrumChart(props: SpectrumChartProps): ReactElement {
           y2={MARGIN.top + plotHeight}
           className="spectrum__axis"
         />
-        {ticks.map((tick) => (
+        {axis.values.map((tick, index) => (
           <g key={tick}>
             <line
               x1={toX(tick)}
@@ -221,7 +243,7 @@ export function SpectrumChart(props: SpectrumChartProps): ReactElement {
               className="spectrum__axis"
             />
             <text x={toX(tick)} y={height - 8} className="spectrum__tick">
-              {formatTick(tick)}
+              {axis.labels[index]}
             </text>
           </g>
         ))}
@@ -229,8 +251,8 @@ export function SpectrumChart(props: SpectrumChartProps): ReactElement {
 
       <figcaption className="spectrum__caption">
         <span>
-          {parsed.xUnits} · {trace.x.length.toLocaleString('en')} columns from{' '}
-          {parsed.x.length.toLocaleString('en')} points
+          {parsed.xUnits} · {formatInteger(trace.x.length)} columns from{' '}
+          {formatInteger(parsed.x.length)} points
         </span>
         {legend.map((item) => (
           <span key={item.kind} className="spectrum__key">
@@ -277,26 +299,4 @@ function crop(
     return { x: [...(x as number[])], y: [...(y as number[])] };
   }
   return { x: keptX, y: keptY };
-}
-
-/** Round tick positions that land on numbers a reader expects. */
-function axisTicks(min: number, max: number): number[] {
-  const span = max - min;
-  if (span <= 0) return [min];
-  const rough = span / 8;
-  const magnitude = 10 ** Math.floor(Math.log10(rough));
-  const step =
-    [1, 2, 5, 10].map((factor) => factor * magnitude).find((s) => s >= rough) ??
-    rough;
-  const ticks: number[] = [];
-  for (let value = Math.ceil(min / step) * step; value <= max; value += step) {
-    ticks.push(Number(value.toFixed(6)));
-  }
-  return ticks;
-}
-
-function formatTick(value: number): string {
-  if (Math.abs(value) >= 100) return value.toFixed(0);
-  if (Math.abs(value) >= 10) return value.toFixed(1);
-  return value.toFixed(1);
 }

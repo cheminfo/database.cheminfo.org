@@ -25,6 +25,10 @@ db.exec('PRAGMA journal_mode = OFF');
 db.exec('PRAGMA synchronous = OFF');
 db.exec(await readFile(join(import.meta.dirname, 'schema.sql'), 'utf8'));
 
+// The substructure index as sixteen unsigned 32-bit words, index00 to index15:
+// bit 0 is the high bit of index00, as OpenChemLib's getIndex() sets it.
+const INDEX_COLUMNS = Array.from({ length: 16 }, (_, word) => `index${String(word).padStart(2, '0')}`);
+
 const compounds = await readJson(join(RAW, 'compounds.json'));
 const irPicked = await readJson(join(RAW, 'ir-picked.json'));
 const nmrPicked = await readJson(join(RAW, 'nmr-picked.json'));
@@ -44,11 +48,15 @@ for (const record of nmrPicked) {
 
 const insert = {
   compound: db.prepare(
-    `INSERT INTO compounds (id_code, id_code_no_stereo, smiles, molfile, formula, molecular_weight,
-      monoisotopic_mass, charge, unsaturation, nb_atoms, nb_suppliers, preferred_name)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO compounds (id_code, id_code_no_stereo, formula, charge, unsaturation, nb_atoms,
+      nb_suppliers, preferred_name)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
   ),
-  element: db.prepare('INSERT INTO compound_elements (compound_id, symbol, count) VALUES (?, ?, ?)'),
+  structure: db.prepare(
+    `INSERT INTO structures (compound_id, molfile, canonical_smiles, molecular_weight, monoisotopic_mass,
+      ${INDEX_COLUMNS.join(', ')})
+     VALUES (?, ?, ?, ?, ?, ${INDEX_COLUMNS.map(() => '?').join(', ')})`,
+  ),
   name: db.prepare('INSERT INTO names (compound_id, value, language) VALUES (?, ?, ?)'),
   cas: db.prepare('INSERT INTO cas_numbers (compound_id, value) VALUES (?, ?)'),
   entry: db.prepare(
@@ -87,8 +95,6 @@ const insert = {
   nmrCoupling: db.prepare(
     'INSERT INTO nmr_couplings (nmr_signal_id, coupling_hz, multiplicity) VALUES (?, ?, ?)',
   ),
-  document: db.prepare('INSERT INTO documents (compound_id, doc) VALUES (?, ?)'),
-  meta: db.prepare('INSERT INTO meta (key, value) VALUES (?, ?)'),
 };
 
 /** A number the source may have left as an empty string. */
@@ -163,23 +169,19 @@ function preferredName(names) {
   return scored[0]?.name ?? null;
 }
 
-function elementsOf(molfile, smiles) {
+/** Every atom of the structure, hydrogens included, or null when it cannot be read. */
+function atomCountOf(molfile, smiles) {
   try {
     const molecule = molfile ? OCL.Molecule.fromMolfile(molfile) : OCL.Molecule.fromSmiles(smiles);
     molecule.addImplicitHydrogens();
-    const counts = new Map();
-    for (let atom = 0; atom < molecule.getAllAtoms(); atom++) {
-      const symbol = OCL.Molecule.cAtomLabel[molecule.getAtomicNo(atom)];
-      counts.set(symbol, (counts.get(symbol) ?? 0) + 1);
-    }
-    return counts;
+    return molecule.getAllAtoms();
   } catch {
-    return new Map();
+    return null;
   }
 }
 
 const stats = {
-  compounds: 0, names: 0, elements: 0, cas: 0, entries: 0,
+  compounds: 0, structures: 0, names: 0, cas: 0, entries: 0,
   mp: 0, bp: 0, densities: 0, fp: 0, hazards: 0,
   irSpectra: 0, irPeaks: 0, nmrSpectra: 0, nmrRanges: 0, nmrSignals: 0, nmrCouplings: 0,
 };
@@ -208,17 +210,12 @@ for (const compound of compounds) {
 
   const molfile = primary?.mol?.[0]?.value?.value ?? null;
   const dumpMf = compound.dumpEntries[0]?.mf;
-  const elements = elementsOf(molfile, compound.smiles);
-  const nbAtoms = [...elements.values()].reduce((a, b) => a + b, 0);
+  const nbAtoms = atomCountOf(molfile, compound.smiles);
 
   const compoundId = insert.compound.run(
     compound.idCode,
     compound.idCodeNoStereo,
-    compound.smiles,
-    molfile,
     formula,
-    round(primary?.mf?.[0]?.mw ?? dumpMf?.mass, 4),
-    round(primary?.mf?.[0]?.exactMass ?? dumpMf?.monoisotopicMass, 6),
     number(dumpMf?.charge) ?? 0,
     number(dumpMf?.unsaturation),
     nbAtoms,
@@ -227,10 +224,20 @@ for (const compound of compounds) {
   ).lastInsertRowid;
   stats.compounds++;
 
-  for (const [symbol, count] of elements) {
-    insert.element.run(compoundId, symbol, count);
-    stats.elements++;
-  }
+  const molecule = OCL.Molecule.fromIDCode(compound.idCode);
+  const index = molecule.getIndex();
+  const words = [];
+  for (let word = 0; word < INDEX_COLUMNS.length; word++) words.push(index[word] >>> 0);
+  insert.structure.run(
+    compoundId,
+    molfile,
+    molecule.toIsomericSmiles(),
+    round(primary?.mf?.[0]?.mw ?? dumpMf?.mass, 4),
+    round(primary?.mf?.[0]?.exactMass ?? dumpMf?.monoisotopicMass, 6),
+    ...words,
+  );
+  stats.structures++;
+
   for (const name of names) {
     insert.name.run(compoundId, name.value, name.language);
     stats.names++;
@@ -407,96 +414,7 @@ for (const compound of compounds) {
 }
 
 db.exec('COMMIT');
-
-// The nested view of the same rows, for the Mango half of the playground.
-db.exec('BEGIN');
-const rows = db.prepare('SELECT id, preferred_name, formula, molecular_weight, monoisotopic_mass, charge, unsaturation, smiles, nb_suppliers FROM compounds').all();
-const read = {
-  names: db.prepare('SELECT value, language FROM names WHERE compound_id = ?'),
-  elements: db.prepare('SELECT symbol, count FROM compound_elements WHERE compound_id = ?'),
-  cas: db.prepare('SELECT value FROM cas_numbers WHERE compound_id = ?'),
-  entries: db.prepare('SELECT id, entry_id, catalog_id, supplier, description, purity FROM catalog_entries WHERE compound_id = ?'),
-  mp: db.prepare('SELECT low_c, high_c, sign FROM melting_points WHERE catalog_entry_id = ?'),
-  bp: db.prepare('SELECT low_c, high_c, sign, pressure_mmhg FROM boiling_points WHERE catalog_entry_id = ?'),
-  density: db.prepare('SELECT low, high, temperature_c FROM densities WHERE catalog_entry_id = ?'),
-  fp: db.prepare('SELECT low_c, high_c FROM flash_points WHERE catalog_entry_id = ?'),
-  hazard: db.prepare('SELECT system, code, description FROM hazard_statements WHERE catalog_entry_id = ?'),
-  ir: db.prepare('SELECT id, source_id, solvent FROM ir_spectra WHERE compound_id = ?'),
-  irPeaks: db.prepare('SELECT wavenumber, transmittance, absorbance, source FROM ir_peaks WHERE ir_spectrum_id = ?'),
-  nmr: db.prepare('SELECT id, source_id, nucleus, solvent, frequency_mhz FROM nmr_spectra WHERE compound_id = ?'),
-  nmrRanges: db.prepare('SELECT id, from_ppm, to_ppm, integration FROM nmr_ranges WHERE nmr_spectrum_id = ?'),
-  nmrSignals: db.prepare('SELECT id, delta_ppm, multiplicity FROM nmr_signals WHERE nmr_range_id = ?'),
-  nmrCouplings: db.prepare('SELECT coupling_hz, multiplicity FROM nmr_couplings WHERE nmr_signal_id = ?'),
-};
-
-for (const row of rows) {
-  const elements = {};
-  for (const element of read.elements.all(row.id)) elements[element.symbol] = element.count;
-  const doc = {
-    _id: `compound:${row.id}`,
-    name: row.preferred_name,
-    formula: row.formula,
-    mass: row.molecular_weight,
-    monoisotopicMass: row.monoisotopic_mass,
-    charge: row.charge,
-    unsaturation: row.unsaturation,
-    smiles: row.smiles,
-    nbSuppliers: row.nb_suppliers,
-    elements,
-    names: read.names.all(row.id).map((n) => ({ value: n.value, language: n.language })),
-    cas: read.cas.all(row.id).map((c) => c.value),
-    listings: read.entries.all(row.id).map((entry) => ({
-      entryId: entry.entry_id,
-      catalogId: entry.catalog_id,
-      supplier: entry.supplier,
-      description: entry.description,
-      purity: entry.purity,
-      meltingPoints: read.mp.all(entry.id).map((v) => ({ low: v.low_c, high: v.high_c, sign: v.sign })),
-      boilingPoints: read.bp.all(entry.id).map((v) => ({ low: v.low_c, high: v.high_c, sign: v.sign, pressure: v.pressure_mmhg })),
-      densities: read.density.all(entry.id).map((v) => ({ low: v.low, high: v.high, temperature: v.temperature_c })),
-      flashPoints: read.fp.all(entry.id).map((v) => ({ low: v.low_c, high: v.high_c })),
-      hazards: read.hazard.all(entry.id).map((h) => ({ system: h.system, code: h.code, description: h.description })),
-    })),
-    ir: read.ir.all(row.id).map((spectrum) => ({
-      sourceId: spectrum.source_id,
-      solvent: spectrum.solvent,
-      peaks: read.irPeaks.all(spectrum.id).map((p) => ({
-        wavenumber: p.wavenumber, transmittance: p.transmittance, absorbance: p.absorbance, source: p.source,
-      })),
-    })),
-    nmr: read.nmr.all(row.id).map((spectrum) => ({
-      sourceId: spectrum.source_id,
-      nucleus: spectrum.nucleus,
-      solvent: spectrum.solvent,
-      frequency: spectrum.frequency_mhz,
-      ranges: read.nmrRanges.all(spectrum.id).map((range) => ({
-        from: range.from_ppm,
-        to: range.to_ppm,
-        integration: range.integration,
-        signals: read.nmrSignals.all(range.id).map((signal) => ({
-          delta: signal.delta_ppm,
-          multiplicity: signal.multiplicity,
-          couplings: read.nmrCouplings.all(signal.id).map((c) => ({ coupling: c.coupling_hz, multiplicity: c.multiplicity })),
-        })),
-      })),
-    })),
-  };
-  insert.document.run(row.id, JSON.stringify(doc));
-}
-
 const built = new Date().toISOString();
-for (const [key, value] of Object.entries({
-  built,
-  source: 'ChemExper (https://www.chemexper.com) — catalogue records, IR and 1H NMR spectra',
-  prices: 'removed — this database carries no price, quantity or currency',
-  irPicking: 'ml-gsd on absorbance, options in scripts/harvest/ir-lib.mjs',
-  nmrPicking: 'nmr-processing xyAutoRangesPicking, options in scripts/harvest/06-nmr.mjs',
-  nmrJcamp: 'header, NTUPLES declaration and the real page of the Bruker export; the instrument parameter block, the audit trail and the imaginary page are not stored',
-  compounds: String(stats.compounds),
-})) {
-  insert.meta.run(key, value);
-}
-db.exec('COMMIT');
 
 db.exec('VACUUM');
 db.exec('ANALYZE');

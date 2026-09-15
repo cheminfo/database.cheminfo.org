@@ -74,6 +74,17 @@ test('comparison operators work on numbers', () => {
   ).toBe('d');
 });
 
+test('without a sort, documents come back in _id order, as CouchDB returns them', () => {
+  const shuffled = [DOCS[2], DOCS[0], DOCS[3], DOCS[1]] as typeof DOCS;
+  const result = runMango(shuffled, { selector: {}, fields: ['_id'] });
+  expect(result.docs).toStrictEqual([
+    { _id: 'a' },
+    { _id: 'b' },
+    { _id: 'c' },
+    { _id: 'd' },
+  ]);
+});
+
 test('a dotted path reaches into an object', () => {
   const result = runMango(DOCS, { selector: { 'elements.C': { $gte: 6 } } });
   expect(result.docs.map((doc) => doc._id)).toStrictEqual(['c']);

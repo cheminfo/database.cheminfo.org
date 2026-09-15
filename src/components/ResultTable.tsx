@@ -1,6 +1,7 @@
-import { Callout, HTMLTable } from '@blueprintjs/core';
 import type { ReactElement, ReactNode } from 'react';
 import { useMemo } from 'react';
+import { formatInteger, pluralize } from 'react-cheminfo/core';
+import { MF } from 'react-mf';
 
 import type { SqlValue } from '../query/runSql.ts';
 
@@ -9,24 +10,37 @@ export interface ResultTableProps {
   columns: string[];
   /** The rows, already capped. */
   rows: SqlValue[][];
-  /** True when the cap cut the result short. */
+  /**
+   * True when the cap cut the result short.
+   * @default false
+   */
   truncated?: boolean;
-  /** How long the query took. */
+  /**
+   * How long the query took.
+   * @default undefined — no timing is printed
+   */
   elapsedMs?: number;
-  /** How many rows matched before any cap, when that differs. */
+  /**
+   * How many rows matched before any cap, when that differs.
+   * @default undefined
+   */
   matched?: number;
 }
 
 /** Longer cell contents are cut, with the full value kept in the tooltip. */
 const MAX_CELL = 160;
 
+/** Columns whose text is a molecular formula, drawn with sub- and superscripts. */
+const FORMULA_COLUMNS = new Set(['formula', 'mf']);
+
 /**
- * The rows a query produced.
+ * The rows a query produced, boxed the way `sqlite3` prints them in
+ * `.mode box`, inside a `Terminal`.
  *
  * A JCAMP column holds two hundred kilobytes of numbers, so a cell is cut at a
  * readable length rather than laying the whole spectrum across the page.
  * @param props - The result to show.
- * @returns The table.
+ * @returns The table and a summary line.
  */
 export function ResultTable(props: ResultTableProps): ReactElement {
   const { columns, rows, truncated = false, elapsedMs, matched } = props;
@@ -34,6 +48,10 @@ export function ResultTable(props: ResultTableProps): ReactElement {
   // `SELECT a, a` repeats a column name — so keys are built from the values and
   // disambiguated by how often each has been seen.
   const columnKeys = useMemo(() => disambiguate(columns), [columns]);
+  const formulaColumns = useMemo(
+    () => columns.map((column) => FORMULA_COLUMNS.has(column.toLowerCase())),
+    [columns],
+  );
   const rowKeys = useMemo(
     () => disambiguate(rows.map((row) => JSON.stringify(row))),
     [rows],
@@ -41,26 +59,16 @@ export function ResultTable(props: ResultTableProps): ReactElement {
 
   if (rows.length === 0) {
     return (
-      <Callout intent="none" className="result__empty">
+      <p className="terminal__note result__empty">
         No rows matched. Widen the condition, or check a spelling.
-      </Callout>
+      </p>
     );
   }
 
   return (
-    <div className="result">
-      <p className="result__summary">
-        {rows.length} {rows.length === 1 ? 'row' : 'rows'}
-        {matched !== undefined && matched !== rows.length
-          ? ` of ${matched} matched`
-          : ''}
-        {truncated ? ' — more were left out' : ''}
-        {elapsedMs === undefined
-          ? ''
-          : ` · ${elapsedMs.toFixed(elapsedMs < 10 ? 1 : 0)} ms`}
-      </p>
-      <div className="result__scroll">
-        <HTMLTable compact striped interactive={false}>
+    <>
+      <div className="terminal__scroll">
+        <table className="terminal-table">
           <thead>
             <tr>
               {columns.map((column, index) => (
@@ -77,15 +85,25 @@ export function ResultTable(props: ResultTableProps): ReactElement {
                     className={cellClass(cell)}
                     title={fullValue(cell)}
                   >
-                    {renderCell(cell)}
+                    {renderCell(cell, formulaColumns[cellIndex] === true)}
                   </td>
                 ))}
               </tr>
             ))}
           </tbody>
-        </HTMLTable>
+        </table>
       </div>
-    </div>
+      <p className="terminal__status result__summary">
+        {rows.length} {pluralize(rows.length, 'row')}
+        {matched !== undefined && matched !== rows.length
+          ? ` of ${matched} matched`
+          : ''}
+        {truncated ? ' — more were left out' : ''}
+        {elapsedMs === undefined
+          ? ''
+          : ` · ${elapsedMs.toFixed(elapsedMs < 10 ? 1 : 0)} ms`}
+      </p>
+    </>
   );
 }
 
@@ -103,12 +121,12 @@ function disambiguate(values: string[]): string[] {
   });
 }
 
-function cellClass(value: SqlValue): string {
-  if (value === null) return 'cell cell--null';
+function cellClass(value: SqlValue): string | undefined {
+  if (value === null) return 'cell--null';
   if (typeof value === 'number' || typeof value === 'bigint') {
-    return 'cell cell--number';
+    return 'cell--number';
   }
-  return 'cell';
+  return undefined;
 }
 
 function fullValue(value: SqlValue): string {
@@ -117,10 +135,11 @@ function fullValue(value: SqlValue): string {
   return String(value);
 }
 
-function renderCell(value: SqlValue): ReactNode {
-  if (value === null) return <span className="cell__null">NULL</span>;
+function renderCell(value: SqlValue, isFormula: boolean): ReactNode {
+  if (value === null) return 'NULL';
   if (value instanceof Uint8Array) return `⟨${value.byteLength} bytes⟩`;
+  if (isFormula && typeof value === 'string') return <MF mf={value} />;
   const text = String(value);
   if (text.length <= MAX_CELL) return text;
-  return `${text.slice(0, MAX_CELL)}… (${text.length.toLocaleString('en')} characters)`;
+  return `${text.slice(0, MAX_CELL)}… (${formatInteger(text.length)} characters)`;
 }

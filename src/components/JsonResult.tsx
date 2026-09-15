@@ -1,5 +1,8 @@
-import { Callout } from '@blueprintjs/core';
 import type { ReactElement } from 'react';
+import { useMemo, useState } from 'react';
+import { formatInteger, pluralize } from 'react-cheminfo/core';
+
+import { HighlightedQuery } from './QueryCode.tsx';
 
 export interface JsonResultProps {
   /** The documents a Mango query returned. */
@@ -16,41 +19,42 @@ export interface JsonResultProps {
 const FOLD_AT = 1200;
 
 /**
- * The documents a Mango query returned, as JSON.
+ * The documents a Mango query returned, as coloured JSON, printed inside a
+ * `Terminal`.
  *
  * A document keeps its nesting here on purpose: seeing the arrays that SQL
  * spread over four tables sitting inside one object is the comparison the site
  * is built around.
  * @param props - The result to show.
- * @returns The JSON pane.
+ * @returns The documents and a summary line.
  */
 export function JsonResult(props: JsonResultProps): ReactElement {
   const { docs, matched, truncated, elapsedMs } = props;
 
   if (docs.length === 0) {
     return (
-      <Callout intent="none" className="result__empty">
+      <p className="terminal__note result__empty">
         No document matched. A field that does not exist matches nothing — check
         the spelling against the schema, and remember that an array needs{' '}
         <code>$elemMatch</code>.
-      </Callout>
+      </p>
     );
   }
 
   return (
-    <div className="result">
-      <p className="result__summary">
-        {docs.length} {docs.length === 1 ? 'document' : 'documents'}
-        {matched === docs.length ? '' : ` of ${matched} matched`}
-        {truncated ? ' — more were left out' : ''} ·{' '}
-        {elapsedMs.toFixed(elapsedMs < 10 ? 1 : 0)} ms
-      </p>
-      <div className="result__scroll">
+    <>
+      <div className="terminal__scroll">
         {docs.map((doc, index) => (
           <Document key={documentKey(doc, index)} doc={doc} />
         ))}
       </div>
-    </div>
+      <p className="terminal__status result__summary">
+        {docs.length} {pluralize(docs.length, 'document')}
+        {matched === docs.length ? '' : ` of ${matched} matched`}
+        {truncated ? ' — more were left out' : ''} ·{' '}
+        {elapsedMs.toFixed(elapsedMs < 10 ? 1 : 0)} ms
+      </p>
+    </>
   );
 }
 
@@ -76,16 +80,31 @@ function documentKey(doc: Record<string, unknown>, index: number): string {
 }
 
 function Document({ doc }: { doc: Record<string, unknown> }): ReactElement {
-  const text = JSON.stringify(doc, null, 2);
+  const text = useMemo(() => JSON.stringify(doc, null, 2), [doc]);
+  // Colouring every full compound up front costs half a second; a folded one
+  // is coloured when it is opened.
+  const [open, setOpen] = useState(false);
+
   if (text.length <= FOLD_AT) {
-    return <pre className="json-doc">{text}</pre>;
+    return (
+      <pre className="json-doc">
+        <HighlightedQuery code={text} language="mango" />
+      </pre>
+    );
   }
   return (
-    <details className="json-doc json-doc--folded">
+    <details
+      className="json-doc json-doc--folded"
+      onToggle={(event) => setOpen(event.currentTarget.open)}
+    >
       <summary>
-        {documentLabel(doc)} — {text.length.toLocaleString('en')} characters
+        {documentLabel(doc)} — {formatInteger(text.length)} characters
       </summary>
-      <pre>{text}</pre>
+      {open ? (
+        <pre>
+          <HighlightedQuery code={text} language="mango" />
+        </pre>
+      ) : null}
     </details>
   );
 }

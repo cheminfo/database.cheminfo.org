@@ -1,16 +1,16 @@
-import {
-  Alert,
-  Button,
-  Callout,
-  ProgressBar,
-  Tag,
-  TextArea,
-} from '@blueprintjs/core';
+import { Button, Callout, Tag, TextArea } from '@blueprintjs/core';
 import { useSignals } from '@preact/signals-react/runtime';
 import type { ReactElement } from 'react';
-import { useState } from 'react';
+import { progressSummary } from 'react-cheminfo/core';
+import {
+  ExerciseActions,
+  ExerciseLevelTag,
+  ExerciseProgressHeader,
+  ExerciseStatusIcon,
+} from 'react-cheminfo/ui';
 
 import { GlossaryText } from '../components/GlossaryText.tsx';
+import { QueryCode } from '../components/QueryCode.tsx';
 import type { Exercise } from '../data/exercises.ts';
 import { EXERCISES } from '../data/exercises.ts';
 import { useDatabase } from '../data/useDatabase.ts';
@@ -24,11 +24,8 @@ import {
 } from '../state/exerciseProgress.ts';
 import { navigate } from '../state/index.ts';
 
-const LEVEL_INTENT = {
-  beginner: 'success',
-  intermediate: 'warning',
-  advanced: 'danger',
-} as const;
+/** Every exercise the progress bar counts against, in the order they are given. */
+const EXERCISE_IDS = EXERCISES.map((exercise) => exercise.id);
 
 /**
  * The challenges: write a query until every requirement is met.
@@ -42,70 +39,47 @@ const LEVEL_INTENT = {
  */
 export function Exercises(props: { exerciseId: string | null }): ReactElement {
   useSignals();
-  const [clearing, setClearing] = useState(false);
   const current = EXERCISES.find(
     (exercise) => exercise.id === props.exerciseId,
   );
-  const solved = EXERCISES.filter(
-    (exercise) => attempts.value[exercise.id]?.status === 'solved',
-  ).length;
+  const summary = progressSummary(attempts.value, EXERCISE_IDS);
 
   return (
     <div className="exercises">
       <header className="exercises__head">
-        <div>
-          <h1 className="page__title">Exercises</h1>
-          <p className="page__lead">
-            {solved} of {EXERCISES.length} solved
-          </p>
-        </div>
-        <Button
-          variant="minimal"
-          intent="danger"
-          text="Clear all answers"
-          onClick={() => setClearing(true)}
-        />
+        <h1 className="page__title">Exercises</h1>
       </header>
-      <ProgressBar
-        value={solved / EXERCISES.length}
-        intent="primary"
-        stripes={false}
-      />
+      <ExerciseProgressHeader summary={summary} onClearAll={clearAttempts} />
 
       <div className="exercises__body">
         <ol className="exercises__list">
           {EXERCISES.map((exercise) => {
             const attempt = attempts.value[exercise.id];
+            const status = attempt?.status ?? 'idle';
+            const hintsRevealed = attempt?.hintsRevealed ?? 0;
             return (
               <li key={exercise.id}>
                 <Button
                   className="exercises__entry"
                   active={exercise.id === current?.id}
                   onClick={() => navigate('exercises', exercise.id)}
-                  icon={
-                    attempt?.status === 'solved'
-                      ? 'tick-circle'
-                      : attempt?.status === 'attempted'
-                        ? 'warning-sign'
-                        : 'circle'
-                  }
-                  intent={attempt?.status === 'solved' ? 'success' : 'none'}
+                  icon={<ExerciseStatusIcon status={status} />}
+                  intent={status === 'solved' ? 'success' : 'none'}
                   alignText="start"
                   fill
                 >
                   <span className="exercises__entry-title">
                     {exercise.title}
                   </span>
-                  <Tag minimal intent={LEVEL_INTENT[exercise.level]}>
-                    {exercise.level}
-                  </Tag>
-                  <Tag minimal>{exercise.language}</Tag>
-                  {attempt?.status === 'solved' && attempt.hintsRevealed > 0 ? (
-                    <Tag minimal>
-                      {attempt.hintsRevealed} hint
-                      {attempt.hintsRevealed === 1 ? '' : 's'}
-                    </Tag>
-                  ) : null}
+                  <span className="exercises__entry-tags">
+                    <ExerciseLevelTag level={exercise.level} />
+                    <Tag minimal>{exercise.language}</Tag>
+                    {status === 'solved' && hintsRevealed > 0 ? (
+                      <Tag minimal>
+                        {hintsRevealed} hint{hintsRevealed === 1 ? '' : 's'}
+                      </Tag>
+                    ) : null}
+                  </span>
                 </Button>
               </li>
             );
@@ -120,21 +94,6 @@ export function Exercises(props: { exerciseId: string | null }): ReactElement {
           </Callout>
         )}
       </div>
-
-      <Alert
-        isOpen={clearing}
-        intent="danger"
-        confirmButtonText="Clear everything"
-        cancelButtonText="Keep them"
-        onConfirm={() => {
-          clearAttempts();
-          setClearing(false);
-        }}
-        onCancel={() => setClearing(false)}
-      >
-        Every answer and every revealed hint is forgotten. This cannot be
-        undone.
-      </Alert>
     </div>
   );
 }
@@ -143,7 +102,7 @@ function ExerciseCard({ exercise }: { exercise: Exercise }): ReactElement {
   useSignals();
   const database = useDatabase();
   const attempt = attemptFor(exercise.id);
-  const query = attempt.query || exercise.starter || '';
+  const query = attempt.answer || exercise.starter || '';
 
   const check: AnswerCheck | null =
     database.state === 'ready' && query.trim() !== ''
@@ -173,7 +132,7 @@ function ExerciseCard({ exercise }: { exercise: Exercise }): ReactElement {
         className="exercise__editor"
         value={query}
         onChange={(event) =>
-          updateAttempt(exercise.id, { query: event.currentTarget.value })
+          updateAttempt(exercise.id, { answer: event.currentTarget.value })
         }
         placeholder={
           exercise.language === 'mango'
@@ -188,41 +147,30 @@ function ExerciseCard({ exercise }: { exercise: Exercise }): ReactElement {
         fill
       />
 
-      <div className="exercise__actions">
-        <Button
-          intent="primary"
-          text="Check"
-          onClick={commit}
-          disabled={!check}
-        />
-        <Button
-          text={`Reveal hint (${attempt.hintsRevealed}/${exercise.hints.length})`}
-          disabled={attempt.hintsRevealed >= exercise.hints.length}
-          onClick={() =>
-            updateAttempt(exercise.id, {
-              hintsRevealed: attempt.hintsRevealed + 1,
-            })
-          }
-        />
-        <Button
-          text={attempt.showSolution ? 'Hide solution' : 'Reveal solution'}
-          onClick={() =>
-            updateAttempt(exercise.id, { showSolution: !attempt.showSolution })
-          }
-        />
-        <Button
-          variant="minimal"
-          text="Reset"
-          onClick={() =>
-            updateAttempt(exercise.id, {
-              query: '',
-              status: 'idle',
-              hintsRevealed: 0,
-              showSolution: false,
-            })
-          }
-        />
-      </div>
+      <ExerciseActions
+        className="exercise__actions"
+        onCheck={commit}
+        checkDisabled={!check}
+        hintsRevealed={attempt.hintsRevealed}
+        hintCount={exercise.hints.length}
+        onRevealHint={() =>
+          updateAttempt(exercise.id, {
+            hintsRevealed: attempt.hintsRevealed + 1,
+          })
+        }
+        showSolution={attempt.showSolution}
+        onToggleSolution={() =>
+          updateAttempt(exercise.id, { showSolution: !attempt.showSolution })
+        }
+        onReset={() =>
+          updateAttempt(exercise.id, {
+            answer: '',
+            status: 'idle',
+            hintsRevealed: 0,
+            showSolution: false,
+          })
+        }
+      />
 
       {exercise.hints.slice(0, attempt.hintsRevealed).map((hint, index) => (
         <Callout key={hint} intent="primary" className="exercise__hint">
@@ -262,11 +210,11 @@ function ExerciseCard({ exercise }: { exercise: Exercise }): ReactElement {
       {attempt.showSolution ? (
         <div className="exercise__solution">
           <h3>One answer</h3>
-          <pre>{exercise.solution}</pre>
+          <QueryCode code={exercise.solution} language="sql" />
           {exercise.mangoSolution ? (
             <>
               <h3>The same, in Mango</h3>
-              <pre>{exercise.mangoSolution}</pre>
+              <QueryCode code={exercise.mangoSolution} language="mango" />
             </>
           ) : null}
         </div>

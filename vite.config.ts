@@ -25,8 +25,8 @@ export default defineConfig({
     // `sitemap.xml` and `robots.txt`.
     cheminfoPrerender({
       site: SITE_ID,
-      // Forty-four addresses, not six: every tutorial step and every exercise
-      // is a link somebody hands out, and the image serves no fallback page.
+      // Every tutorial step and every exercise, not only the pages: each is a
+      // link somebody hands out, and the image serves no fallback page.
       routes: INDEXED_ROUTES,
       origin: SITE_URL,
       description:
@@ -42,13 +42,11 @@ export default defineConfig({
     }),
   ],
   resolve: {
-    // `react-cheminfo` is linked from a checkout until its next release, and a
-    // linked package brings its own `node_modules/react`. Two copies of React
-    // make every component from it call hooks against a dispatcher the running
-    // renderer never populated, and the page dies at first render with
-    // `Cannot read properties of null (reading 'useReducer')` — a blank page
-    // that reads like a routing bug and is not one.
-    dedupe: ['react', 'react-dom', '@blueprintjs/core'],
+    // One copy of each, even when a dependency is linked from a checkout. Two
+    // copies of React make components call hooks against a dispatcher the
+    // renderer never populated, and the page dies at first render; a molecule
+    // built by one copy of openchemlib cannot be searched by another.
+    dedupe: ['react', 'react-dom', '@blueprintjs/core', 'openchemlib'],
   },
   // The dataset is read-only and queried in memory, so no OPFS and no
   // SharedArrayBuffer: the COOP/COEP headers the sqlite-wasm README asks for

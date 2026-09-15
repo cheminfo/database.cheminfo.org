@@ -1,5 +1,6 @@
 import { HTMLTable, Tag } from '@blueprintjs/core';
 import type { ReactElement } from 'react';
+import { formatInteger } from 'react-cheminfo/core';
 
 import { SchemaDiagram } from '../components/SchemaDiagram.tsx';
 import type { ColumnInfo, TableInfo } from '../data/schema.ts';
@@ -50,7 +51,7 @@ function TableCard({ table }: { table: TableInfo }): ReactElement {
       <header className="schema__table-head">
         <h3 className="schema__table-name">{table.name}</h3>
         <Tag minimal className="schema__rows">
-          {table.rowCount.toLocaleString('en')} rows
+          {formatInteger(table.rowCount)} rows
         </Tag>
         {table.kind === 'view' ? (
           <Tag minimal intent="primary">

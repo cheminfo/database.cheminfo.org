@@ -10,9 +10,10 @@
 
 import { useSignals } from '@preact/signals-react/runtime';
 import type { ReactElement, ReactNode } from 'react';
-import { useEffect, useState } from 'react';
+import { Suspense, lazy, useEffect, useState } from 'react';
 import type { NavItem } from 'react-cheminfo/ui';
 import {
+  CiteButton,
   EcosystemButton,
   HiddenPartsProvider,
   NavLink,
@@ -22,9 +23,9 @@ import {
   SiteHeader,
   SiteMark,
   SiteTheme,
-  useCompactHeader,
 } from 'react-cheminfo/ui';
 
+import { ABOUT } from './about.ts';
 import { About } from './pages/About.tsx';
 import { Browse } from './pages/Browse.tsx';
 import { Cheatsheet } from './pages/Cheatsheet.tsx';
@@ -43,6 +44,12 @@ import {
 import { navigate, router, startRouter, state } from './state/index.ts';
 import { SHARE_VOCABULARY } from './state/shareConfig.ts';
 
+// OpenChemLib is several megabytes, and only this page needs it.
+const Substructure = lazy(async () => {
+  const module = await import('./pages/Substructure.tsx');
+  return { default: module.Substructure };
+});
+
 /** About is a utility, so it is not one of the pages listed beside the brand. */
 const ABOUT_TAB: TabId = 'about';
 
@@ -56,7 +63,6 @@ export function App(): ReactElement {
   const itemId = state.view.itemId.value;
   const share = state.view.share.value;
   const [isSharing, setIsSharing] = useState(false);
-  const compact = useCompactHeader();
 
   useEffect(startRouter, []);
 
@@ -64,54 +70,54 @@ export function App(): ReactElement {
     <HiddenPartsProvider hidden={share.hidden}>
       <SiteTheme siteId={SITE_ID} />
 
-      <SiteHeader
-        siteId={SITE_ID}
-        embedded={share.embed}
-        activeId={tab}
-        nav={navItems()}
-        onHome={() => {
-          navigate('playground');
-        }}
-        markSize={24}
-        actions={
-          <>
-            {/* About leads the utilities on every site of the family, and is a
+      <div className="app-screen">
+        <SiteHeader
+          siteId={SITE_ID}
+          embedded={share.embed}
+          activeId={tab}
+          nav={navItems()}
+          onHome={() => {
+            navigate('playground');
+          }}
+          markSize={24}
+          actions={
+            <>
+              {/* About leads the utilities on every site of the family, and is a
                 real address rather than a dialog: a page is indexed, linkable
                 and printable. */}
-            <NavLink
-              item={{
-                id: ABOUT_TAB,
-                label: (
-                  <>
-                    <SiteMark siteId={SITE_ID} size={14} />
-                    {compact ? null : 'About'}
-                  </>
-                ),
-                href: '/about',
-                title: `What ${SITE_NAME} is, and where its data comes from`,
-                onSelect: () => {
-                  navigate(ABOUT_TAB);
-                },
-              }}
-              active={tab === ABOUT_TAB}
-            />
-            <EcosystemButton currentSiteId={SITE_ID} compact={compact} />
-            <ShareButton
-              compact={compact}
-              onClick={() => {
-                setIsSharing(true);
-              }}
-            />
-          </>
-        }
-      />
+              <NavLink
+                item={{
+                  id: ABOUT_TAB,
+                  label: 'About',
+                  icon: <SiteMark siteId={SITE_ID} size={14} />,
+                  href: '/about',
+                  title: `What ${SITE_NAME} is, and where its data comes from`,
+                  onSelect: () => {
+                    navigate(ABOUT_TAB);
+                  },
+                }}
+                active={tab === ABOUT_TAB}
+              />
+              <CiteButton works={ABOUT.cite ?? []} />
+              <EcosystemButton currentSiteId={SITE_ID} />
+              <ShareButton
+                onClick={() => {
+                  setIsSharing(true);
+                }}
+              />
+            </>
+          }
+        />
 
-      <main
-        className={share.embed ? 'app-shell app-shell--embedded' : 'app-shell'}
-        data-testid={`page-${tab}`}
-      >
-        <PageBody tab={tab} itemId={itemId} />
-      </main>
+        <main
+          className={
+            share.embed ? 'app-shell app-shell--embedded' : 'app-shell'
+          }
+          data-testid={`page-${tab}`}
+        >
+          <PageBody tab={tab} itemId={itemId} />
+        </main>
+      </div>
 
       <SiteFooter
         siteId={SITE_ID}
@@ -168,6 +174,15 @@ function PageBody(props: { tab: TabId; itemId: string | null }): ReactNode {
   const { tab, itemId } = props;
 
   if (tab === 'browse') return <Browse />;
+  if (tab === 'substructure') {
+    return (
+      <Suspense
+        fallback={<p className="page__lead">Loading the structure tools…</p>}
+      >
+        <Substructure />
+      </Suspense>
+    );
+  }
   if (tab === 'tutorial') return <Tutorial step={itemId} />;
   if (tab === 'exercises') return <Exercises exerciseId={itemId} />;
   if (tab === 'schema') return <Schema />;

@@ -3,10 +3,11 @@ import { expect, test } from 'vitest';
 
 import { HOME_ROUTE, ROUTES, routeForTab, tabTakesId } from '../routes.ts';
 
-test('the site answers the seven addresses, in the order the bar lists them', () => {
+test('the site answers the eight addresses, in the order the bar lists them', () => {
   expect(ROUTES.map((route) => route.path)).toStrictEqual([
     '/',
     '/browse',
+    '/substructure',
     '/tutorial',
     '/exercises',
     '/schema',

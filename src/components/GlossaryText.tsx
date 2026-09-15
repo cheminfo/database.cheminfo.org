@@ -1,7 +1,8 @@
 import { Tooltip } from '@blueprintjs/core';
 import type { ReactElement, ReactNode } from 'react';
+import type { GlossaryEntry } from 'react-cheminfo/core';
+import { parseGlossaryMarkers } from 'react-cheminfo/core';
 
-import type { GlossaryEntry } from '../data/glossary.ts';
 import { GLOSSARY } from '../data/glossary.ts';
 
 export interface GlossaryTextProps {
@@ -25,33 +26,31 @@ export function GlossaryText(props: GlossaryTextProps): ReactElement {
 function render(text: string): ReactNode[] {
   const out: ReactNode[] = [];
   let key = 0;
-  for (const chunk of text.split(/(?<token>\[\[[^\]]+\]\]|`[^`]+`)/g)) {
+  for (const chunk of text.split(/(?<code>`[^`]+`)/g)) {
     if (chunk === '') continue;
     if (chunk.startsWith('`') && chunk.endsWith('`')) {
       out.push(<code key={key++}>{chunk.slice(1, -1)}</code>);
       continue;
     }
-    const term = /^\[\[(?<term>[^\]]+)\]\]$/.exec(chunk)?.groups?.term;
-    if (term === undefined) {
-      out.push(chunk);
-      continue;
+    for (const segment of parseGlossaryMarkers(chunk)) {
+      const entry =
+        segment.kind === 'term' ? GLOSSARY[segment.term] : undefined;
+      if (entry === undefined) {
+        out.push(segment.text);
+        continue;
+      }
+      out.push(
+        <Tooltip
+          key={key++}
+          content={<GlossaryCard entry={entry} />}
+          popoverClassName="glossary-popover"
+          hoverOpenDelay={150}
+          placement="top"
+        >
+          <span className="glossary-term">{segment.text}</span>
+        </Tooltip>,
+      );
     }
-    const entry = GLOSSARY[term.toLowerCase()];
-    if (!entry) {
-      out.push(term);
-      continue;
-    }
-    out.push(
-      <Tooltip
-        key={key++}
-        content={<GlossaryCard entry={entry} />}
-        popoverClassName="glossary-popover"
-        hoverOpenDelay={150}
-        placement="top"
-      >
-        <span className="glossary-term">{term}</span>
-      </Tooltip>,
-    );
   }
   return out;
 }

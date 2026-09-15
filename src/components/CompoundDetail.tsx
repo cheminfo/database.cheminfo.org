@@ -1,5 +1,6 @@
 import { Callout, HTMLTable, Tag } from '@blueprintjs/core';
 import type { ReactElement } from 'react';
+import { MF } from 'react-mf';
 
 import type {
   CompoundDetail as Compound,
@@ -49,7 +50,7 @@ export function CompoundDetail({
       <header className="detail__head">
         <h2 className="detail__name">{compound.name ?? compound.smiles}</h2>
         <Tag minimal size="large">
-          {compound.formula}
+          <MF mf={compound.formula} />
         </Tag>
         {compound.cas.map((cas) => (
           <Tag key={cas} minimal intent="primary">
@@ -78,13 +79,6 @@ export function CompoundDetail({
         />
         <Fact label="SMILES" value={compound.smiles} mono />
         <Fact label="OCL id code" value={compound.idCode} mono />
-        <Fact
-          label="Elements"
-          value={compound.elements
-            .map((e) => `${e.symbol}${e.count}`)
-            .join(' ')}
-          mono
-        />
       </dl>
 
       <Section title={`Names (${compound.names.length})`}>

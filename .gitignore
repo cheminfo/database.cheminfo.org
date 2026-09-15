@@ -15,7 +15,7 @@ npm-debug.log*
 
 # Harvest cache: re-read from ChemExper by scripts/harvest, and not needed to
 # build the site — public/chem.sqlite is committed for that.
-data
+/data
 
 # Deploy state kept by the server's global deploy script
 .deploy

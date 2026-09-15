@@ -1,6 +1,7 @@
 import { Button, InputGroup, Tag } from '@blueprintjs/core';
 import type { ReactElement } from 'react';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { MF } from 'react-mf';
 
 import type { CompoundSummary } from '../data/readCompound.ts';
 
@@ -117,7 +118,7 @@ export function CompoundList(props: CompoundListProps): ReactElement {
               {compound.name ?? compound.smiles}
             </span>
             <Tag minimal className="browse__entry-formula">
-              {compound.formula}
+              <MF mf={compound.formula} />
             </Tag>
           </Button>
         ))}

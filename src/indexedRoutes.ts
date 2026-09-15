@@ -1,9 +1,9 @@
 /**
- * Every address a crawler can fetch — the six pages, plus one per tutorial step
- * and one per exercise.
+ * Every address a crawler can fetch — the pages, plus one per tutorial step and
+ * one per exercise.
  *
- * The router only needs the six: a step is a place inside the tutorial, not a
- * seventh tab. A crawler needs all forty-four, because each of them is a real
+ * The router only needs the pages: a step is a place inside the tutorial, not a
+ * tab of its own. A crawler needs every one of them, because each is a real
  * address a lecturer hands out, and the static image serves no fallback page —
  * an address with no file behind it is a 404, not the tool under another name.
  */
@@ -72,7 +72,7 @@ const exerciseRoutes: RouteMeta[] = EXERCISES.map((exercise) => ({
 /**
  * The route table the build writes files and the sitemap from.
  *
- * The six pages keep their `prefix`, so an address below one of them that is
+ * The pages keep their `prefix`, so an address below one of them that is
  * not listed here — a step renamed after a link was handed out — is still
  * described as its section rather than as the home page.
  */

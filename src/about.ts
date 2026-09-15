@@ -14,8 +14,8 @@ export const ABOUT: AboutContent = {
   can: [
     'Run SQL and CouchDB Mango queries over the same data, side by side.',
     'Read the tables, their columns and their foreign keys as one diagram.',
-    'Follow a tutorial that preloads each step into both editors.',
-    'Solve exercises checked against the exact rows they expect.',
+    'Follow a tutorial into both editors, then solve exercises checked against exact rows.',
+    'Draw a fragment and watch its 512-bit index screen compounds before atoms are compared.',
     'Translate between the two languages with a printable cheatsheet.',
     'Hand out any query as a link, or frame it in a course page.',
   ],
@@ -23,6 +23,8 @@ export const ABOUT: AboutContent = {
     'The database is a single SQLite file the browser fetches once and queries in place. Nothing is sent anywhere: the engine is compiled to WebAssembly and runs in the page, so a query over a few hundred thousand rows costs a page load and nothing more.',
     'The same rows are loaded into PouchDB, which answers Mango selectors the way CouchDB does. So a question asked in two languages is asked of the same data, and the difference a student sees is the difference between the languages themselves.',
   ],
+  people: [{ name: 'Luc Patiny' }],
+  providedBy: ['epfl'],
   credits: [
     'sqlite-wasm',
     'pouchdb',
@@ -32,5 +34,5 @@ export const ABOUT: AboutContent = {
     'react',
     'vite',
   ],
-  cite: [TEACHING_WORK, PLATFORM_WORK],
+  cite: [PLATFORM_WORK, TEACHING_WORK],
 };

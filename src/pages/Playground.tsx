@@ -2,13 +2,16 @@ import { Callout, ProgressBar } from '@blueprintjs/core';
 import { useSignals } from '@preact/signals-react/runtime';
 import type { ReactElement } from 'react';
 import { useCallback, useState } from 'react';
+import { formatBytes } from 'react-cheminfo/core';
 import { PagePart } from 'react-cheminfo/ui';
 
 import { JsonResult } from '../components/JsonResult.tsx';
 import { QueryEditor } from '../components/QueryEditor.tsx';
 import { ResultTable } from '../components/ResultTable.tsx';
 import { TableList } from '../components/TableList.tsx';
+import { Terminal } from '../components/Terminal.tsx';
 import { useDatabase } from '../data/useDatabase.ts';
+import type { QueryLanguage } from '../query/queryCode.ts';
 import type { MangoResult } from '../query/runMango.ts';
 import { runMango } from '../query/runMango.ts';
 import type { SqlResult } from '../query/runSql.ts';
@@ -16,7 +19,9 @@ import { runSql } from '../query/runSql.ts';
 import { queries, rememberQueries } from '../state/queries.ts';
 
 type Outcome<T> =
-  { ok: true; value: T } | { ok: false; message: string } | null;
+  | { ok: true; query: string; value: T }
+  | { ok: false; query: string; message: string }
+  | null;
 
 /**
  * The playground: one dataset, two languages, side by side.
@@ -36,25 +41,29 @@ export function Playground(): ReactElement {
   const runSqlQuery = useCallback(() => {
     if (database.state !== 'ready') return;
     rememberQueries();
+    const query = queries.sql.value;
     try {
       setSqlOutcome({
         ok: true,
-        value: runSql(database.database.database, queries.sql.value),
+        query,
+        value: runSql(database.database.database, query),
       });
     } catch (error) {
-      setSqlOutcome({ ok: false, message: messageOf(error) });
+      setSqlOutcome({ ok: false, query, message: messageOf(error) });
     }
   }, [database]);
 
   const runMangoQuery = useCallback(() => {
     if (database.state !== 'ready') return;
     rememberQueries();
+    const query = queries.mango.value;
     let parsed: unknown;
     try {
-      parsed = JSON.parse(queries.mango.value);
+      parsed = JSON.parse(query);
     } catch (error) {
       setMangoOutcome({
         ok: false,
+        query,
         message: `That is not valid JSON, so it was not run: ${messageOf(error)}`,
       });
       return;
@@ -62,13 +71,14 @@ export function Playground(): ReactElement {
     try {
       setMangoOutcome({
         ok: true,
+        query,
         value: runMango(
           database.documents,
           parsed as Parameters<typeof runMango>[1],
         ),
       });
     } catch (error) {
-      setMangoOutcome({ ok: false, message: messageOf(error) });
+      setMangoOutcome({ ok: false, query, message: messageOf(error) });
     }
   }, [database]);
 
@@ -101,7 +111,7 @@ export function Playground(): ReactElement {
               onRun={runSqlQuery}
               busy={loading}
             />
-            <Outcome outcome={sqlOutcome}>
+            <OutcomeTerminal outcome={sqlOutcome} language="sql">
               {(result) => (
                 <ResultTable
                   columns={result.columns}
@@ -110,7 +120,7 @@ export function Playground(): ReactElement {
                   elapsedMs={result.elapsedMs}
                 />
               )}
-            </Outcome>
+            </OutcomeTerminal>
           </div>
         </PagePart>
 
@@ -126,7 +136,7 @@ export function Playground(): ReactElement {
               onRun={runMangoQuery}
               busy={loading}
             />
-            <Outcome outcome={mangoOutcome}>
+            <OutcomeTerminal outcome={mangoOutcome} language="mango">
               {(result) => (
                 <JsonResult
                   docs={result.docs}
@@ -135,7 +145,7 @@ export function Playground(): ReactElement {
                   elapsedMs={result.elapsedMs}
                 />
               )}
-            </Outcome>
+            </OutcomeTerminal>
           </div>
         </PagePart>
       </div>
@@ -158,7 +168,6 @@ function DatabaseProgress({
   received: number;
   total: number | null;
 }): ReactElement {
-  const megabytes = (received / 1e6).toFixed(1);
   const share = total === null ? undefined : Math.min(received / total, 1);
   return (
     <Callout
@@ -167,9 +176,9 @@ function DatabaseProgress({
       title="Reading the database"
     >
       <p>
-        {megabytes} MB
-        {total === null ? '' : ` of ${(total / 1e6).toFixed(1)} MB`} — it
-        downloads once, then runs in this tab with nothing sent back.
+        {formatBytes(received)}
+        {total === null ? '' : ` of ${formatBytes(total)}`} — it downloads once,
+        then runs in this tab with nothing sent back.
       </p>
       <ProgressBar
         value={share}
@@ -180,22 +189,25 @@ function DatabaseProgress({
   );
 }
 
-function Outcome<T>({
+function OutcomeTerminal<T>({
   outcome,
+  language,
   children,
 }: {
   outcome: Outcome<T>;
+  language: QueryLanguage;
   children: (value: T) => ReactElement;
 }): ReactElement | null {
   if (outcome === null) return null;
-  if (!outcome.ok) {
-    return (
-      <Callout intent="danger" className="result__error">
-        {outcome.message}
-      </Callout>
-    );
-  }
-  return children(outcome.value);
+  return (
+    <Terminal
+      query={outcome.query}
+      language={language}
+      error={outcome.ok ? undefined : outcome.message}
+    >
+      {outcome.ok ? children(outcome.value) : null}
+    </Terminal>
+  );
 }
 
 function messageOf(error: unknown): string {
