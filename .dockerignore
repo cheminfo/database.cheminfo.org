@@ -1,6 +1,11 @@
 .claude
 .env
+# The build reads the commit it was made from out of these three,
+# which is what the About page shows. Nothing else of .git is sent.
 .git
+!.git/HEAD
+!.git/refs
+!.git/packed-refs
 .github
 compose*.yaml
 coverage

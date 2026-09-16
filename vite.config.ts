@@ -1,5 +1,5 @@
 import react from '@vitejs/plugin-react';
-import { cheminfoPrerender } from 'react-cheminfo/vite';
+import { cheminfoBuildInfo, cheminfoPrerender } from 'react-cheminfo/vite';
 import { defineConfig } from 'vite';
 
 import { INDEXED_ROUTES } from './src/indexedRoutes.ts';
@@ -23,6 +23,7 @@ export default defineConfig({
   base: './',
   plugins: [
     react(),
+    cheminfoBuildInfo(),
     // One real HTML file per routed address, each with its own title,
     // description and canonical. A static image has nothing to rewrite a head
     // per request, so without this every address ships the same head and a

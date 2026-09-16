@@ -4,12 +4,16 @@
  * this file never grows into a page nobody reads.
  */
 
+import { BUILD_INFO } from 'react-cheminfo/build-info';
 import type { AboutContent } from 'react-cheminfo/core';
 import { PLATFORM_WORK, TEACHING_WORK } from 'react-cheminfo/core';
 
 /** The About record of database.cheminfo.org. */
 export const ABOUT: AboutContent = {
   siteId: 'database',
+  // Which release, built when, from which commit: the build says so,
+  // because a version written by hand is wrong by the next release.
+  build: BUILD_INFO,
   what: 'Ask one real chemical dataset the same question in SQL and in Mango, in the browser, and compare the two answers.',
   can: [
     'Run SQL and CouchDB Mango queries over the same data, side by side.',
