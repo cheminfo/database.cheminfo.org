@@ -23,6 +23,7 @@ import type { TabId } from '../routes.ts';
 import { ROUTES, SITE_ID, SITE_URL } from '../routes.ts';
 
 import { SHARE_VOCABULARY } from './shareConfig.ts';
+import { pathWithoutBase, withBase } from './site.ts';
 import { view } from './view.ts';
 
 /** The one place that knows how this site's addresses are written. */
@@ -59,10 +60,11 @@ export function navigate(tab: TabId, id: string | null = null): void {
     view.share.value,
     SHARE_VOCABULARY,
   );
+  const mounted = withBase(path);
   globalThis.history.pushState(
     null,
     '',
-    query === '' ? path : `${path}?${query}`,
+    query === '' ? mounted : `${mounted}?${query}`,
   );
   view.tab.value = tab;
   view.itemId.value = id;
@@ -76,7 +78,7 @@ export function navigate(tab: TabId, id: string | null = null): void {
  */
 export function applyCurrentAddress(): void {
   const { pathname, search } = globalThis.location;
-  const route = router.parse(`${pathname}${search}`);
+  const route = router.parse(`${pathWithoutBase(pathname)}${search}`);
   view.tab.value = route.tab;
   view.itemId.value = route.id;
 }

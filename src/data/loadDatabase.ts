@@ -2,13 +2,19 @@ import type { Database, Sqlite3Static } from '@sqlite.org/sqlite-wasm';
 import sqlite3InitModule from '@sqlite.org/sqlite-wasm';
 
 /**
- * Where the shipped database sits.
+ * Where the shipped database sits, beside the page's own mount.
  *
- * Root-absolute, not relative: every routed address is served the same page, so
- * a relative name would resolve against `/exercises/…` and fetch the fallback
- * HTML instead — which arrives as a cheerful 200 and fails much later.
+ * Resolved against the `<base>` rather than against the address open: every
+ * routed address is served the same page, so a bare relative name would resolve
+ * against `/exercises/…` and fetch the fallback HTML instead — which arrives as
+ * a cheerful 200 and fails much later. The `<base>` is also what carries the
+ * mount, so the one build finds its database on a host of its own and under a
+ * path of a shared one alike.
  */
-const DATABASE_URL = '/chem.sqlite';
+function databaseUrl(): string {
+  const baseUri = globalThis.document?.baseURI;
+  return baseUri ? new URL('chem.sqlite', baseUri).href : '/chem.sqlite';
+}
 
 export interface LoadedDatabase {
   /** The opened, read-only handle every query runs against. */
@@ -58,7 +64,7 @@ async function openDatabase(options: {
 }): Promise<LoadedDatabase> {
   const [sqlite3, bytes] = await Promise.all([
     sqlite3InitModule(),
-    download(options.url ?? DATABASE_URL, options.onProgress),
+    download(options.url ?? databaseUrl(), options.onProgress),
   ]);
 
   const database = new sqlite3.oo1.DB();

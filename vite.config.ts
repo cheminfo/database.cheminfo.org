@@ -16,6 +16,11 @@ import { ROUTES, SITE_ID, SITE_URL } from './src/routes.ts';
 const port = Number(process.env.PORT ?? 10_824);
 
 export default defineConfig({
+  // The build carries no mount path. Every asset is written relative, so the
+  // one `dist` serves this site's own host and a path of a shared one without
+  // being rebuilt: the `<base>` the page carries is what resolves them, and the
+  // router reads its mount back off that.
+  base: './',
   plugins: [
     react(),
     // One real HTML file per routed address, each with its own title,
@@ -33,6 +38,10 @@ export default defineConfig({
         'Query a real chemical dataset two ways over the same tables: in SQL, against SQLite compiled to WebAssembly, and in Mango, the CouchDB JSON query language.',
       operatingSystem: 'Any modern browser',
       noscript: {
+        // The build bakes in no mount, so the crawl path is written against
+        // the `<base>` the page carries rather than the root of a host this
+        // deployment may only share.
+        hrefs: 'relative',
         heading: 'database.cheminfo.org — one dataset, two query languages',
         intro:
           'Ask the same question of a chemical dataset in SQL and in Mango and compare the two answers. The database is a SQLite file your browser downloads once and queries locally, so nothing you write ever leaves your machine — which is also why the tool needs JavaScript.',
