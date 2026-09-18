@@ -5,6 +5,7 @@ import { formatInteger } from 'react-cheminfo/core';
 import { SchemaDiagram } from '../components/SchemaDiagram.tsx';
 import type { ColumnInfo, TableInfo } from '../data/schema.ts';
 import { SCHEMA, SCHEMA_GROUPS, SCHEMA_STORY } from '../data/schema.ts';
+import { sectionHref } from '../state/site.ts';
 
 /**
  * The tables, their columns and the keys between them.
@@ -97,7 +98,7 @@ function ColumnRow({ column }: { column: ColumnInfo }): ReactElement {
             {' '}
             <a
               className="schema__reference"
-              href={`#table-${column.references.table}`}
+              href={sectionHref(`table-${column.references.table}`)}
               title={`Points at ${column.references.table}.${column.references.column}`}
             >
               → {column.references.table}.{column.references.column}

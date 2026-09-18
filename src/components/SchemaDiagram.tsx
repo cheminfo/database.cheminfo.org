@@ -8,6 +8,7 @@ import {
   NODE_WIDTH,
   SCHEMA_DIAGRAM,
 } from '../data/schemaDiagram.ts';
+import { sectionHref } from '../state/site.ts';
 
 /**
  * The tables and the keys between them, drawn from `SCHEMA` as a tree.
@@ -116,7 +117,7 @@ function Box({ node, width, height }: BoxProps): ReactElement {
           ref={ref}
           className={`${className ?? ''} schema__node${kindClass}`}
           data-open={isOpen}
-          href={`#table-${node.name}`}
+          href={sectionHref(`table-${node.name}`)}
           style={style}
         >
           <span className="schema__node-name">{node.name}</span>

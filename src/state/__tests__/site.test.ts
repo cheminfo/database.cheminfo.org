@@ -53,3 +53,15 @@ test('a page of another tool on the shared host is not read as one of ours', asy
     '/cheminfo/databasex',
   );
 });
+
+test('a link to a section stays on the page on screen, query included', async () => {
+  const site = await siteMountedAt('https://eln.epfl.ch/cheminfo/database/');
+  vi.stubGlobal('location', {
+    pathname: '/cheminfo/database/schema',
+    search: '?embed',
+  });
+
+  expect(site.sectionHref('table-compounds')).toBe(
+    '/cheminfo/database/schema?embed#table-compounds',
+  );
+});

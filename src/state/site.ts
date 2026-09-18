@@ -33,3 +33,15 @@ export function withBase(path: string): string {
 export function pathWithoutBase(pathname: string): string {
   return stripBasePath(BASE_PATH, pathname);
 }
+
+/**
+ * A link to a section of the page on screen. The page carries a `<base>`, so a
+ * bare `#id` would resolve against the site's root and open the home page; the
+ * link names the page's own address, and its query, instead.
+ * @param id - The `id` of the section.
+ * @returns The address of that section on the page on screen.
+ */
+export function sectionHref(id: string): string {
+  const { pathname, search } = globalThis.location;
+  return `${pathname}${search}#${id}`;
+}

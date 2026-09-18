@@ -182,7 +182,9 @@ test('the schema diagram draws every table, and each box opens its columns', asy
   await page.goto('/schema');
   await expect(page.locator('.schema__diagram .schema__node')).toHaveCount(16);
   await expect(page.locator('.schema__diagram .schema__edge')).toHaveCount(17);
-  await page.locator('.schema__node[href="#table-nmr_couplings"]').click();
+  await page
+    .locator('.schema__node[href="/schema#table-nmr_couplings"]')
+    .click();
   await expect(page.locator('#table-nmr_couplings')).toBeInViewport();
 });
 
