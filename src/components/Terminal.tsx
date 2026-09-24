@@ -49,7 +49,9 @@ export function Terminal(props: TerminalProps): ReactElement {
       {error === undefined ? (
         children
       ) : (
-        <p className="terminal__error result__error">Error: {error}</p>
+        <p className="terminal__error result__error text-selectable">
+          Error: {error}
+        </p>
       )}
     </div>
   );

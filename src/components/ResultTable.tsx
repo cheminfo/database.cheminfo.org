@@ -1,6 +1,7 @@
 import type { ReactElement, ReactNode } from 'react';
 import { useMemo } from 'react';
-import { formatInteger, pluralize } from 'react-cheminfo/core';
+import { formatInteger, pluralize, toDelimited } from 'react-cheminfo/core';
+import { ClickToCopy, CopyButton } from 'react-cheminfo/ui';
 import { MF } from 'react-mf';
 
 import type { SqlValue } from '../query/runSql.ts';
@@ -27,7 +28,7 @@ export interface ResultTableProps {
   matched?: number;
 }
 
-/** Longer cell contents are cut, with the full value kept in the tooltip. */
+/** Longer cell contents are cut; a click still copies the whole value. */
 const MAX_CELL = 160;
 
 /** Columns whose text is a molecular formula, drawn with sub- and superscripts. */
@@ -80,29 +81,47 @@ export function ResultTable(props: ResultTableProps): ReactElement {
             {rows.map((row, rowIndex) => (
               <tr key={rowKeys[rowIndex]}>
                 {row.map((cell, cellIndex) => (
-                  <td
+                  <ClickToCopy
                     key={columnKeys[cellIndex]}
+                    as="td"
                     className={cellClass(cell)}
-                    title={fullValue(cell)}
+                    value={fullValue(cell)}
+                    label={columns[cellIndex]}
+                    disabled={cell === null || cell instanceof Uint8Array}
                   >
                     {renderCell(cell, formulaColumns[cellIndex] === true)}
-                  </td>
+                  </ClickToCopy>
                 ))}
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-      <p className="terminal__status result__summary">
-        {rows.length} {pluralize(rows.length, 'row')}
-        {matched !== undefined && matched !== rows.length
-          ? ` of ${matched} matched`
-          : ''}
-        {truncated ? ' — more were left out' : ''}
-        {elapsedMs === undefined
-          ? ''
-          : ` · ${elapsedMs.toFixed(elapsedMs < 10 ? 1 : 0)} ms`}
-      </p>
+      <div className="result__footer">
+        <p className="terminal__status result__summary">
+          {rows.length} {pluralize(rows.length, 'row')}
+          {matched !== undefined && matched !== rows.length
+            ? ` of ${matched} matched`
+            : ''}
+          {truncated ? ' — more were left out' : ''}
+          {elapsedMs === undefined
+            ? ''
+            : ` · ${elapsedMs.toFixed(elapsedMs < 10 ? 1 : 0)} ms`}
+        </p>
+        <CopyButton
+          className="result__copy"
+          minimal
+          small
+          label="Copy as TSV"
+          title="Copy the whole result as tab-separated values"
+          content={() =>
+            toDelimited(
+              rows.map((row) => row.map(delimitedValue)),
+              { header: columns },
+            )
+          }
+        />
+      </div>
     </>
   );
 }
@@ -132,6 +151,12 @@ function cellClass(value: SqlValue): string | undefined {
 function fullValue(value: SqlValue): string {
   if (value === null) return 'NULL';
   if (value instanceof Uint8Array) return `${value.byteLength} bytes`;
+  return String(value);
+}
+
+/** A missing value and a blob are written out as an empty cell, not as prose. */
+function delimitedValue(value: SqlValue): string {
+  if (value === null || value instanceof Uint8Array) return '';
   return String(value);
 }
 

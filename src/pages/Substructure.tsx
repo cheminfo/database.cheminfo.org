@@ -5,6 +5,7 @@ import { Molecule } from 'openchemlib';
 import type { ReactElement } from 'react';
 import { useMemo, useState } from 'react';
 import { Structure, StructureEditor } from 'react-cheminfo/structure';
+import { ClickToCopy } from 'react-cheminfo/ui';
 
 import { indexFragments } from '../chemistry/indexFragments.ts';
 import { searchSubstructure } from '../chemistry/substructureSearch.ts';
@@ -53,6 +54,10 @@ export function Substructure(): ReactElement {
   );
   const selected =
     fragments.find((fragment) => fragment.bit === selectedBit) ?? null;
+  const indexCondition =
+    selected === null
+      ? ''
+      : `index${String(selected.word).padStart(2, '0')} & ${selected.mask}`;
   const result = useMemo(
     () => (ready && query ? searchSubstructure(ready, query) : null),
     [ready, query],
@@ -124,9 +129,21 @@ export function Substructure(): ReactElement {
                 bondHighlight={selected ? selected.bonds.flat() : undefined}
               />
               <figcaption className="substructure__note">
-                {selected
-                  ? `Bit ${selected.bit} (index${String(selected.word).padStart(2, '0')} & ${selected.mask}): the key fragment matches ${selected.atoms.length} ${selected.atoms.length === 1 ? 'time' : 'times'}.`
-                  : 'No bit picked.'}
+                {selected ? (
+                  <>
+                    {`Bit ${selected.bit} (`}
+                    <ClickToCopy
+                      as="code"
+                      value={indexCondition}
+                      label="index condition"
+                    >
+                      {indexCondition}
+                    </ClickToCopy>
+                    {`): the key fragment matches ${selected.atoms.length} ${selected.atoms.length === 1 ? 'time' : 'times'}.`}
+                  </>
+                ) : (
+                  'No bit picked.'
+                )}
               </figcaption>
             </figure>
           ) : null}

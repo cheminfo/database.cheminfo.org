@@ -79,6 +79,14 @@ function documentKey(doc: Record<string, unknown>, index: number): string {
   return typeof id === 'string' ? id : `doc-${index}`;
 }
 
+/**
+ * One document, kept selectable: a student quotes one field of it far more
+ * often than the whole object, which is why it reads like a code block rather
+ * than being copied whole.
+ * @param props - The document to print.
+ * @param props.doc - The document.
+ * @returns The coloured JSON, folded when it is long.
+ */
 function Document({ doc }: { doc: Record<string, unknown> }): ReactElement {
   const text = useMemo(() => JSON.stringify(doc, null, 2), [doc]);
   // Colouring every full compound up front costs half a second; a folded one
@@ -87,7 +95,7 @@ function Document({ doc }: { doc: Record<string, unknown> }): ReactElement {
 
   if (text.length <= FOLD_AT) {
     return (
-      <pre className="json-doc">
+      <pre className="json-doc text-selectable">
         <HighlightedQuery code={text} language="mango" />
       </pre>
     );
@@ -101,7 +109,7 @@ function Document({ doc }: { doc: Record<string, unknown> }): ReactElement {
         {documentLabel(doc)} — {formatInteger(text.length)} characters
       </summary>
       {open ? (
-        <pre>
+        <pre className="text-selectable">
           <HighlightedQuery code={text} language="mango" />
         </pre>
       ) : null}

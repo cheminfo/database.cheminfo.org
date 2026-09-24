@@ -298,6 +298,32 @@ body {
   color: var(--terminal-dim);
 }
 
+.result__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.75rem;
+}
+
+/* The chrome's muted grey is unreadable on the terminal's black, so the copy
+   affordances inside it take the terminal's own dim green. */
+.terminal .result__copy.result__copy,
+.terminal .result__copy.result__copy:hover {
+  color: var(--terminal-dim);
+}
+
+.terminal .click-to-copy:not([data-copy]) .click-to-copy__icon {
+  color: var(--terminal-dim);
+}
+
+/* A cell's own padding outweighs `.click-to-copy--block`, so the room the
+   glyph needs is reclaimed at the cell's specificity. */
+.terminal-table td.click-to-copy,
+.detail__ranges td.click-to-copy,
+table.bp6-html-table td.click-to-copy {
+  padding-right: 22px;
+}
+
 .terminal__note code {
   color: var(--terminal-operator);
 }
@@ -1077,6 +1103,13 @@ button {
 .detail__name {
   margin: 0;
   font-size: 1.25rem;
+}
+
+/* A `Tag` clips what overflows it, so a copyable tag is wrapped rather than
+   filled: the target keeps the room the glyph needs beside the tag. */
+.detail__copy-tag {
+  display: inline-flex;
+  align-items: center;
 }
 
 .detail__facts {

@@ -1,6 +1,7 @@
 import { HTMLTable, Tag } from '@blueprintjs/core';
 import type { ReactElement } from 'react';
 import { formatInteger } from 'react-cheminfo/core';
+import { ClickToCopy } from 'react-cheminfo/ui';
 
 import { SchemaDiagram } from '../components/SchemaDiagram.tsx';
 import type { ColumnInfo, TableInfo } from '../data/schema.ts';
@@ -50,7 +51,11 @@ function TableCard({ table }: { table: TableInfo }): ReactElement {
   return (
     <article className="schema__table" id={`table-${table.name}`}>
       <header className="schema__table-head">
-        <h3 className="schema__table-name">{table.name}</h3>
+        <h3 className="schema__table-name">
+          <ClickToCopy value={table.name} label="table name">
+            {table.name}
+          </ClickToCopy>
+        </h3>
         <Tag minimal className="schema__rows">
           {formatInteger(table.rowCount)} rows
         </Tag>
@@ -84,12 +89,17 @@ function TableCard({ table }: { table: TableInfo }): ReactElement {
 function ColumnRow({ column }: { column: ColumnInfo }): ReactElement {
   return (
     <tr>
-      <td className="schema__column-name">
+      <ClickToCopy
+        as="td"
+        className="schema__column-name"
+        value={column.name}
+        label="column name"
+      >
         {column.name}
         {column.nullable ? null : (
           <span className="schema__required" title="never null" />
         )}
-      </td>
+      </ClickToCopy>
       <td className="schema__column-type">{column.type}</td>
       <td>
         {column.description}

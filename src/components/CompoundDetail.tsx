@@ -1,11 +1,15 @@
 import { Callout, HTMLTable, Tag } from '@blueprintjs/core';
 import type { ReactElement } from 'react';
+import { ClickToCopy } from 'react-cheminfo/ui';
 import { MF } from 'react-mf';
 
 import type {
   CompoundDetail as Compound,
+  HazardStatement,
   IrSpectrum,
   Listing,
+  NmrCoupling,
+  NmrRange,
   NmrSpectrum,
   PropertyClaim,
 } from '../data/readCompound.ts';
@@ -48,22 +52,52 @@ export function CompoundDetail({
   return (
     <article className="detail">
       <header className="detail__head">
-        <h2 className="detail__name">{compound.name ?? compound.smiles}</h2>
-        <Tag minimal size="large">
-          <MF mf={compound.formula} />
-        </Tag>
-        {compound.cas.map((cas) => (
-          <Tag key={cas} minimal intent="primary">
-            CAS {cas}
+        <h2 className="detail__name">
+          <ClickToCopy
+            value={compound.name ?? compound.smiles}
+            label={compound.name === null ? 'SMILES' : 'name'}
+            disabled={(compound.name ?? compound.smiles) === ''}
+          >
+            {compound.name ?? compound.smiles}
+          </ClickToCopy>
+        </h2>
+        {/* A `Tag` clips whatever overflows it, so the copy target wraps the
+            tag rather than sitting inside it. */}
+        <ClickToCopy
+          as="div"
+          className="detail__copy-tag"
+          value={compound.formula}
+          label="molecular formula"
+        >
+          <Tag minimal size="large">
+            <MF mf={compound.formula} />
           </Tag>
+        </ClickToCopy>
+        {compound.cas.map((cas) => (
+          <ClickToCopy
+            key={cas}
+            as="div"
+            className="detail__copy-tag"
+            value={cas}
+            label="CAS number"
+          >
+            <Tag minimal intent="primary">
+              CAS {cas}
+            </Tag>
+          </ClickToCopy>
         ))}
       </header>
 
       <dl className="detail__facts">
-        <Fact label="Molecular weight" value={format(compound.mass, 4)} />
+        <Fact
+          label="Molecular weight"
+          value={format(compound.mass, 4)}
+          copyAs="molecular weight"
+        />
         <Fact
           label="Monoisotopic"
           value={format(compound.monoisotopicMass, 6)}
+          copyAs="monoisotopic mass"
         />
         <Fact label="Charge" value={String(compound.charge)} />
         <Fact label="Unsaturation" value={format(compound.unsaturation, 1)} />
@@ -77,8 +111,13 @@ export function CompoundDetail({
             compound.nbSuppliers === null ? '—' : String(compound.nbSuppliers)
           }
         />
-        <Fact label="SMILES" value={compound.smiles} mono />
-        <Fact label="OCL id code" value={compound.idCode} mono />
+        <Fact label="SMILES" value={compound.smiles} mono copyAs="SMILES" />
+        <Fact
+          label="OCL id code"
+          value={compound.idCode}
+          mono
+          copyAs="ID code"
+        />
       </dl>
 
       <Section title={`Names (${compound.names.length})`}>
@@ -88,7 +127,10 @@ export function CompoundDetail({
               key={`${name.language}-${name.value}`}
               className="detail__name-chip"
             >
-              <Tag minimal>{name.language}</Tag> {name.value}
+              <Tag minimal>{name.language}</Tag>{' '}
+              <ClickToCopy value={name.value} label="name">
+                {name.value}
+              </ClickToCopy>
             </span>
           ))}
         </div>
@@ -149,15 +191,31 @@ function Fact({
   label,
   value,
   mono = false,
+  copyAs,
 }: {
   label: string;
   value: string;
   mono?: boolean;
+  /** What the value is called on the clipboard; left out when it is not copied. */
+  copyAs?: string;
 }): ReactElement {
   return (
     <>
       <dt>{label}</dt>
-      <dd className={mono ? 'is-mono' : undefined}>{value}</dd>
+      <dd className={mono ? 'is-mono' : undefined}>
+        {copyAs === undefined ? (
+          value
+        ) : (
+          <ClickToCopy
+            as="div"
+            value={value}
+            label={copyAs}
+            disabled={value === '' || value === '—'}
+          >
+            {value}
+          </ClickToCopy>
+        )}
+      </dd>
     </>
   );
 }
@@ -170,7 +228,10 @@ function ListingCard({ listing }: { listing: Listing }): ReactElement {
         <span className="detail__listing-id">entry {listing.entryId}</span>
         {listing.catalogId ? (
           <span className="detail__listing-id">
-            catalogue {listing.catalogId}
+            catalogue{' '}
+            <ClickToCopy value={listing.catalogId} label="catalogue number">
+              {listing.catalogId}
+            </ClickToCopy>
           </span>
         ) : null}
         {listing.purity ? (
@@ -202,8 +263,14 @@ function ListingCard({ listing }: { listing: Listing }): ReactElement {
           <ul>
             {listing.hazards.map((hazard) => (
               <li key={hazard.id}>
-                <Tag minimal>{hazard.system}</Tag> <code>{hazard.code}</code>{' '}
-                {hazard.description}
+                <Tag minimal>{hazard.system}</Tag>{' '}
+                <ClickToCopy
+                  value={hazardStatement(hazard)}
+                  label="hazard statement"
+                  disabled={hazardStatement(hazard) === ''}
+                >
+                  <code>{hazard.code}</code> {hazard.description}
+                </ClickToCopy>
               </li>
             ))}
           </ul>
@@ -227,20 +294,32 @@ function Claims({
     <div className="detail__claim">
       <span className="detail__claim-label">{label}</span>
       {claims.map((claim) => (
-        <span
+        <ClickToCopy
           key={`${claim.low}-${claim.high}-${claim.pressure}-${claim.temperature}`}
+          value={claimNumber(claim)}
+          label={label.toLowerCase()}
+          disabled={claim.low === null && claim.high === null}
         >
-          {claim.low === null ? '?' : claim.low}
-          {claim.high === null || claim.high === claim.low
-            ? ''
-            : `–${claim.high}`}
+          {claimNumber(claim)}
           {unit}
           {claim.pressure ? ` at ${claim.pressure} mmHg` : ''}
           {claim.temperature ? ` at ${claim.temperature} °C` : ''}
-        </span>
+        </ClickToCopy>
       ))}
     </div>
   );
+}
+
+/** The bare number or range of a claim — what is pasted, without its unit. */
+function claimNumber(claim: PropertyClaim): string {
+  const low = claim.low === null ? '?' : String(claim.low);
+  if (claim.high === null || claim.high === claim.low) return low;
+  return `${low}–${claim.high}`;
+}
+
+/** The code and the text of a hazard statement, as safety paperwork wants it. */
+function hazardStatement(hazard: HazardStatement): string {
+  return [hazard.code, hazard.description].filter(Boolean).join(' ');
 }
 
 function IrCard({ spectrum }: { spectrum: IrSpectrum }): ReactElement {
@@ -276,9 +355,18 @@ function IrCard({ spectrum }: { spectrum: IrSpectrum }): ReactElement {
           <tbody>
             {spectrum.peaks.map((peak) => (
               <tr key={`${peak.source}-${peak.wavenumber}`}>
-                <td className="is-mono">{peak.wavenumber.toFixed(2)}</td>
-                <td className="is-mono">{format(peak.transmittance, 2)}</td>
-                <td className="is-mono">{format(peak.absorbance, 4)}</td>
+                <NumberCell
+                  value={peak.wavenumber.toFixed(2)}
+                  label="wavenumber"
+                />
+                <NumberCell
+                  value={format(peak.transmittance, 2)}
+                  label="transmittance"
+                />
+                <NumberCell
+                  value={format(peak.absorbance, 4)}
+                  label="absorbance"
+                />
                 <td>{peak.source}</td>
               </tr>
             ))}
@@ -326,10 +414,11 @@ function NmrCard({ spectrum }: { spectrum: NmrSpectrum }): ReactElement {
           {spectrum.ranges.map((range) =>
             range.signals.length === 0 ? (
               <tr key={range.id}>
-                <td className="is-mono">
-                  {range.from.toFixed(3)}–{range.to.toFixed(3)}
-                </td>
-                <td className="is-mono">{format(range.integration, 2)}</td>
+                <NumberCell value={rangeText(range)} label="range" />
+                <NumberCell
+                  value={format(range.integration, 2)}
+                  label="integration"
+                />
                 <td colSpan={3}>no signal compiled</td>
               </tr>
             ) : (
@@ -337,23 +426,38 @@ function NmrCard({ spectrum }: { spectrum: NmrSpectrum }): ReactElement {
                 <tr key={signal.id}>
                   {index === 0 ? (
                     <>
+                      {/* A spanning cell holds its target instead of being
+                          one, because `ClickToCopy` passes no `rowSpan`. */}
                       <td className="is-mono" rowSpan={range.signals.length}>
-                        {range.from.toFixed(3)}–{range.to.toFixed(3)}
+                        <ClickToCopy
+                          as="div"
+                          value={rangeText(range)}
+                          label="range"
+                        >
+                          {rangeText(range)}
+                        </ClickToCopy>
                       </td>
                       <td className="is-mono" rowSpan={range.signals.length}>
-                        {format(range.integration, 2)}
+                        <ClickToCopy
+                          as="div"
+                          value={format(range.integration, 2)}
+                          label="integration"
+                          disabled={range.integration === null}
+                        >
+                          {format(range.integration, 2)}
+                        </ClickToCopy>
                       </td>
                     </>
                   ) : null}
-                  <td className="is-mono">{signal.delta.toFixed(4)}</td>
+                  <NumberCell
+                    value={signal.delta.toFixed(4)}
+                    label="chemical shift"
+                  />
                   <td>{signal.multiplicity ?? '—'}</td>
-                  <td className="is-mono">
-                    {signal.couplings.length === 0
-                      ? '—'
-                      : signal.couplings
-                          .map((c) => c.coupling.toFixed(2))
-                          .join(', ')}
-                  </td>
+                  <NumberCell
+                    value={couplingText(signal.couplings)}
+                    label="coupling constants"
+                  />
                 </tr>
               ))
             ),
@@ -362,6 +466,38 @@ function NmrCard({ spectrum }: { spectrum: NmrSpectrum }): ReactElement {
       </table>
     </div>
   );
+}
+
+/** A monospaced peak-list cell, copied on its own so a value can be pasted. */
+function NumberCell({
+  value,
+  label,
+}: {
+  value: string;
+  label: string;
+}): ReactElement {
+  return (
+    <ClickToCopy
+      as="td"
+      className="is-mono"
+      value={value}
+      label={label}
+      disabled={value === '—'}
+    >
+      {value}
+    </ClickToCopy>
+  );
+}
+
+function rangeText(range: NmrRange): string {
+  return `${range.from.toFixed(3)}–${range.to.toFixed(3)}`;
+}
+
+function couplingText(couplings: NmrCoupling[]): string {
+  if (couplings.length === 0) return '—';
+  const values: string[] = [];
+  for (const coupling of couplings) values.push(coupling.coupling.toFixed(2));
+  return values.join(', ');
 }
 
 function format(value: number | null, digits: number): string {
