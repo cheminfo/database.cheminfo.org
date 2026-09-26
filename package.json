@@ -1,6 +1,6 @@
 {
   "name": "database.cheminfo.org",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Query a real chemical dataset two ways — in SQL and in Mango — over the same tables, in the browser.",
   "type": "module",
