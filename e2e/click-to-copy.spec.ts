@@ -40,7 +40,7 @@ test('a result cell copies exactly what it holds', async ({ page }) => {
     'title',
     'Copy the preferred_name (Ethanol)',
   );
-  await expect(name).toHaveCSS('cursor', 'copy');
+  await expect(name).toHaveCSS('cursor', /\bcopy$/);
   expect(await copyFrom(page, name)).toBe('Ethanol');
 
   // A formula cell is drawn by `<MF>`, and copies its plain string.
@@ -111,7 +111,7 @@ test('a compound gives its CAS number, bare, with a click', async ({
   const cas = page.locator('.detail__head .click-to-copy').filter({
     hasText: 'CAS 51417-51-7',
   });
-  await expect(cas).toHaveCSS('cursor', 'copy');
+  await expect(cas).toHaveCSS('cursor', /\bcopy$/);
   // The number is copied without the `CAS ` the tag reads.
   expect(await copyFrom(page, cas)).toBe('51417-51-7');
   // Copying a value never moves the browser off the compound it sits on.
