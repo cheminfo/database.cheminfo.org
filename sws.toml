@@ -1,0 +1,26 @@
+# What a browser may keep, and for how long.
+#
+# A page names the hashed bundles of the build that wrote it, so a copy kept
+# from an earlier deploy asks this image for files it does not have: the request
+# falls through to the page itself, the browser refuses to run HTML as a module,
+# and the site comes up blank. Everything is therefore revalidated on every
+# visit, which costs a 304. Only the bundles under `assets`, named by their
+# content, are kept without asking.
+#
+# Left to itself static-web-server hands pages out with `max-age=86400`, which
+# blanks the site for a day after each deploy for everyone who came by before
+# it.
+#
+# The rules are read in order, and the last one that matches a request wins.
+
+[advanced]
+
+[[advanced.headers]]
+source = "**"
+[advanced.headers.headers]
+Cache-Control = "no-cache"
+
+[[advanced.headers]]
+source = "**/assets/**"
+[advanced.headers.headers]
+Cache-Control = "public, max-age=31536000, immutable"
