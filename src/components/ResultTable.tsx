@@ -1,7 +1,7 @@
 import type { ReactElement, ReactNode } from 'react';
 import { useMemo } from 'react';
-import { formatInteger, pluralize, toDelimited } from 'react-cheminfo/core';
-import { ClickToCopy, CopyButton } from 'react-cheminfo/ui';
+import { formatInteger, pluralize } from 'react-cheminfo/core';
+import { ClickToCopy, TableDataButton } from 'react-cheminfo/ui';
 import { MF } from 'react-mf';
 
 import type { SqlValue } from '../query/runSql.ts';
@@ -108,18 +108,15 @@ export function ResultTable(props: ResultTableProps): ReactElement {
             ? ''
             : ` · ${elapsedMs.toFixed(elapsedMs < 10 ? 1 : 0)} ms`}
         </p>
-        <CopyButton
-          className="result__copy"
-          minimal
+        <TableDataButton
+          buttonClassName="result__copy"
           small
-          label="Copy as TSV"
-          title="Copy the whole result as tab-separated values"
-          content={() =>
-            toDelimited(
-              rows.map((row) => row.map(delimitedValue)),
-              { header: columns },
-            )
-          }
+          text="Copy or download"
+          rows={() => rows.map((row) => row.map(delimitedValue))}
+          header={columns}
+          fileName="query-result"
+          title="The query result"
+          description={`${formatInteger(rows.length)} ${pluralize(rows.length, 'row', 'rows')}, as the query returned them. A blob column is written empty, since a spreadsheet has nothing to do with its bytes.`}
         />
       </div>
     </>

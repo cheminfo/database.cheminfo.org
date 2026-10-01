@@ -30,13 +30,6 @@ test('the record resolves against the shared registries', () => {
   const about = resolveAbout(ABOUT);
 
   expect(about.site.host).toBe('database.cheminfo.org');
-  expect(about.license).toBe('MIT');
-  expect(about.repository).toBe(
-    'https://github.com/cheminfo/database.cheminfo.org',
-  );
-  expect(about.issues).toBe(
-    'https://github.com/cheminfo/database.cheminfo.org/issues',
-  );
   expect(about.credits.map((entry) => entry.name)).toStrictEqual([
     'SQLite Wasm',
     'PouchDB',

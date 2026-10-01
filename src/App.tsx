@@ -34,13 +34,7 @@ import { Playground } from './pages/Playground.tsx';
 import { Schema } from './pages/Schema.tsx';
 import { Tutorial } from './pages/Tutorial.tsx';
 import type { TabId } from './routes.ts';
-import {
-  REPOSITORY,
-  ROUTES,
-  SITE_ID,
-  SITE_NAME,
-  routeForTab,
-} from './routes.ts';
+import { ROUTES, SITE_ID, SITE_NAME, routeForTab } from './routes.ts';
 import { navigate, router, startRouter, state } from './state/index.ts';
 import { SHARE_VOCABULARY } from './state/shareConfig.ts';
 
@@ -125,12 +119,7 @@ export function App(): ReactElement {
         heading="The rest of the cheminfo family"
       >
         <p className="app-footer-note">
-          Open source, MIT licensed —{' '}
-          <a href={REPOSITORY} target="_blank" rel="noreferrer noopener">
-            the sources of this site
-          </a>
-          . Every query here is a link you can hand out or frame in a course
-          page.
+          Every query here is a link you can hand out or frame in a course page.
         </p>
       </SiteFooter>
 
