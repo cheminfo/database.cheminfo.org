@@ -2,6 +2,7 @@ import react from '@vitejs/plugin-react';
 import { cheminfoBuildInfo, cheminfoPrerender } from 'react-cheminfo/vite';
 import { defineConfig } from 'vite';
 
+import { pageContent } from './src/content.ts';
 import { INDEXED_ROUTES } from './src/indexedRoutes.ts';
 import { ROUTES, SITE_ID, SITE_URL } from './src/routes.ts';
 
@@ -34,6 +35,10 @@ export default defineConfig({
       // Every tutorial step and every exercise, not only the pages: each is a
       // link somebody hands out, and the image serves no fallback page.
       routes: INDEXED_ROUTES,
+      // What each address says for itself. Without it all 46 ship the same
+      // body — this site's menu — and the steps and exercises are
+      // near-duplicates of one another.
+      content: pageContent,
       origin: SITE_URL,
       description:
         'Query a real chemical dataset two ways over the same tables: in SQL, against SQLite compiled to WebAssembly, and in Mango, the CouchDB JSON query language.',
