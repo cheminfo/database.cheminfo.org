@@ -10,8 +10,9 @@
     "url": "git+https://github.com/cheminfo/database.cheminfo.org.git"
   },
   "scripts": {
-    "build": "vite build",
+    "build": "vite build && npm run check-seo",
     "check-deploy": "node node_modules/react-cheminfo/bin/check-deploy.mjs",
+    "check-seo": "node node_modules/react-cheminfo/bin/check-seo.mjs dist",
     "check-tokens": "node node_modules/react-cheminfo/bin/check-tokens.mjs src",
     "check-types": "tsc --noEmit",
     "dev": "vite",
