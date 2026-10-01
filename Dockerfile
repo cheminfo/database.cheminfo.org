@@ -21,14 +21,6 @@ ENV SERVER_ROOT=/public-src
 # crawler must not have to follow a 308 to reach the page that names it.
 ENV SERVER_REDIRECT_TRAILING_SLASH=false
 ENV SERVER_PORT=80
-# Every response a browser will accept compressed is compressed. On-demand
-# brotli covers HTML, CSS, JavaScript, JSON, SVG and WebAssembly; a `.br` or
-# `.gz` written beside a file at build time is served instead where there is
-# one, which is what reaches the types the on-demand list does not know —
-# notably Emscripten's `.data`, served as application/octet-stream — and costs
-# no CPU per request.
-ENV SERVER_COMPRESSION=true
-ENV SERVER_COMPRESSION_STATIC=true
 # A /health endpoint that answers 200 and writes no access-log line, which is
 # what the compose healthcheck and the server's deploy script probe.
 ENV SERVER_HEALTH=true
